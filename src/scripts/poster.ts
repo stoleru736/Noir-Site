@@ -247,6 +247,9 @@ function initPlates(canvases: HTMLCanvasElement[]): void {
 }
 
 export function initPoster(): void {
+  // Opening the link must always start on the hero, never at a restored scroll position.
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  if (!location.hash) scrollTo(0, 0);
   initReveal();
   initStages();
   initEnter();
