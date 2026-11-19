@@ -19,12 +19,12 @@ float pfbm(vec2 p,float per){ float v=0.,a=.5; for(int i=0;i<4;i++){ v+=a*pnoise
 float prof(float s){ return smoothstep(0.,.8,s)*(1.-smoothstep(.8,1.,s)); }
 void main(){
   vec2 uv=gl_FragCoord.xy/512.;
-  float ph=uv.y*4.+pfbm(uv*3.,3.)*1.3;
-  float amp=.6+.4*pnoise(uv*2.,2.);
+  float ph=uv.y*3.+pfbm(uv*2.,2.)*1.7;
+  float amp=.55+.45*pnoise(uv*2.+1.,2.);
   float h1=prof(fract(ph))*amp;
-  float ph2=uv.y*9.+pfbm(uv*7.+3.,7.)*1.6;
-  float h2=prof(fract(ph2))*(.5+.5*pnoise(uv*4.+5.,4.));
-  float macro=(h1+h2*.2)/1.25;
+  float ph2=uv.y*6.+pfbm(uv*4.+3.,4.)*1.5;
+  float h2=prof(fract(ph2))*(.4+.6*pnoise(uv*3.+5.,3.));
+  float macro=(h1+h2*.18)/1.18;
   float rip=sin(uv.y*220.+pfbm(uv*16.,16.)*7.)*.5+.5;
   gl_FragColor=vec4(macro,rip,0.,1.);
 }`;
@@ -48,17 +48,21 @@ void main(){
   vec3 n=normalize(vec3(-(hx-h)/e*.5,1.,-(hz-h)/e*.5));
   n.xz+=vec2(.05,.4)*(rip-.5)*(.2+.8*near);
   n=normalize(n);
-  vec3 L=normalize(vec3(-.75,.3,.55));
-  float diff=max(dot(n,L),0.)*(1.+(rip-.5)*.7*(.3+.7*near));
+  vec3 L=normalize(vec3(-.6,.34,.62));
+  float diff=max(dot(n,L),0.)*(1.+(rip-.5)*.35*near);
   float hs=max(texture2D(uTex,tc+L.xz*.02).r,texture2D(uTex,tc+L.xz*.05).r*.9);
   float occ=clamp((hs-h)*9.-.04,0.,1.);
-  float lit=diff*(1.-.75*occ);
-  vec3 sun=vec3(1.,.9,.76);
-  vec3 col=vec3(.21,.195,.18)*(sun*lit*3.1+vec3(.2,.205,.22));
-  float fog=1.-exp(-z*.09);
-  vec3 hzc=vec3(.14,.12,.1);
-  col=mix(col,hzc,fog*.85);
-  vec3 sky=mix(vec3(.03,.03,.034),hzc*1.05,exp(dy*10.)*.85);
+  float lit=diff*(1.-.55*occ);
+  vec3 sun=vec3(1.,.76,.5);
+  vec3 shade=vec3(.075,.06,.05);
+  vec3 col=shade+vec3(.5,.4,.3)*sun*lit*(.85+.5*near)+vec3(.05,.035,.02)*h;
+  float fog=1.-exp(-z*.075);
+  vec3 hzc=vec3(.5,.34,.2);
+  col=mix(col,hzc,fog*.6);
+  vec2 sp=vec2((suv.x-.3)*asp,(suv.y-.72)*1.6);
+  float glow=exp(-dot(sp,sp)*5.);
+  vec3 sky=mix(vec3(.02,.018,.02),vec3(.3,.19,.1),exp(dy*13.)*.9)+vec3(1.,.7,.4)*glow*.5;
+  col+=vec3(1.,.6,.28)*glow*.18*step(0.,dy)*exp(-dy*20.);
   col=mix(sky,col,smoothstep(-.004,.004,dy));
   float crest=smoothstep(.4,.85,h)*(1.-occ)*step(0.,dy);
   gl_FragColor=vec4(col,crest);
@@ -81,7 +85,7 @@ void main(){
   float a=texture2D(uStreak,vec2(vUv.x*.55-uTime*.16,vUv.y*7.)).r;
   float b=texture2D(uStreak,vec2(vUv.x*.8-uTime*.07+.3,vUv.y*11.+.4)).r;
   float st=smoothstep(.55,.85,mix(b,a,nearK))*(s.a*.95+.12*nearK);
-  col+=vec3(.3,.26,.2)*st;
+  col+=vec3(.4,.3,.18)*st;
   col=mix(col,vec3(.043),smoothstep(.55,1.,uBurst));
   vec2 vv=vUv-.5; col*=1.-.4*dot(vv,vv);
   gl_FragColor=vec4(col,1.);
