@@ -48,67 +48,94 @@ import { BRAND, TAGLINE } from '../data/site';
 </style>
 
 <script>
-  const FRAG = `
+  // Dune landscape: a one-off "bake" pass renders a tileable heightmap into a texture; the per-frame shader only
+  // maps a perspective ground plane onto it, lights it, and adds wind-blown sand. Touch writes into a tiny
+  // low-resolution displacement texture on the CPU that decays back to flat sand.
+  const PRE = `
 #ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
 #else
 precision mediump float;
 #endif
-#define MAXP __MAXP__
-uniform vec2 uRes; uniform float uTime; uniform float uProg; uniform float uBurst;
-uniform vec4 uPts[MAXP];
-float gE;
+`;
+  const VERT = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
+
+  const BAKE = PRE + `
 float hash(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
-float noise(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
-  return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y); }
-float fbm(vec2 p){ float v=0., a=.5; for(int i=0;i<__OCT__;i++){ v+=a*noise(p); p=p*2.03+17.1; a*=.5; } return v; }
-float dunes(vec2 uv){
-  float asp=uRes.x/uRes.y;
-  vec2 p=vec2((uv.x-asp*.5)*(.55+uv.y*.9),pow(uv.y,.8));
-  vec2 q=p*vec2(1.6,4.6);
-  float w=q.y+fbm(q*.8+vec2(uTime*.02,0.))*1.8+sin(q.x*.9+uTime*.05)*.3;
-  float s=fract(w*.7);
-  float ridge=pow(s,1.7)*(1.-smoothstep(.9,1.,s)*.9);
-  return ridge*.6+noise(p*vec2(40.,110.)+vec2(uTime*.01,0.))*.012;
-}
-float touch(vec2 uv){
-  float h=0.;
-  for(int i=0;i<MAXP;i++){
-    vec4 pt=uPts[i]; float age=uTime-pt.z;
-    if(pt.z<0.||age<0.||age>5.) continue;
-    float d=distance(uv,pt.xy); float dec=exp(-age*.9);
-    if(pt.w>0.){ h-=pt.w*dec*exp(-d*d*220.)*.35; gE=max(gE,dec*exp(-d*d*70.)); }
-    else { float r=age*.32; float x=(d-r)*26.; h+=dec*exp(-x*x)*.10*cos(x*3.); gE=max(gE,dec*exp(-x*x)*.8); }
-  }
-  return h;
-}
-float height(vec2 uv){ return dunes(uv)+touch(uv); }
+float pnoise(vec2 p,float per){ vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f); vec2 a=mod(i,per),b=mod(i+1.,per);
+  return mix(mix(hash(a),hash(vec2(b.x,a.y)),f.x),mix(hash(vec2(a.x,b.y)),hash(b),f.x),f.y); }
+float pfbm(vec2 p,float per){ float v=0.,a=.5; for(int i=0;i<4;i++){ v+=a*pnoise(p,per); p*=2.; per*=2.; a*=.5; } return v; }
+float prof(float s){ return smoothstep(0.,.8,s)*(1.-smoothstep(.8,1.,s)); }
 void main(){
-  vec2 frag=gl_FragCoord.xy; float asp=uRes.x/uRes.y;
-  vec2 uv=frag/uRes.y;
-  vec2 c=vec2(asp*.5,.5);
-  uv-=(uv-c)*uBurst*uBurst*.6;
-  gE=0.;
+  vec2 uv=gl_FragCoord.xy/512.;
+  float ph=uv.y*4.+pfbm(uv*3.,3.)*1.3;
+  float amp=.6+.4*pnoise(uv*2.,2.);
+  float h1=prof(fract(ph))*amp;
+  float ph2=uv.y*9.+pfbm(uv*7.+3.,7.)*1.6;
+  float h2=prof(fract(ph2))*(.5+.5*pnoise(uv*4.+5.,4.));
+  float macro=(h1+h2*.2)/1.25;
+  float rip=sin(uv.y*220.+pfbm(uv*16.,16.)*7.)*.5+.5;
+  float streak=pfbm(uv*32.,32.);
+  gl_FragColor=vec4(macro,rip,streak,1.);
+}`;
+
+  const FRAG = PRE + `
+uniform sampler2D uTex; uniform sampler2D uDisp;
+uniform vec2 uRes; uniform vec2 uTexel;
+uniform float uTime; uniform float uProg; uniform float uBurst; uniform float uCam;
+float hash(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+void main(){
+  vec2 suv=gl_FragCoord.xy/uRes; float asp=uRes.x/uRes.y;
+  float dy=.72-suv.y;
+  float dyc=max(dy,.0008);
+  float z=.3/(dyc+.012);
+  float near=exp(-z*.3);
+  vec2 w=vec2((suv.x-.5)*asp*z*1.25, z+uCam+uTime*.01);
+  vec2 tc=w*.5;
   float e=.004;
-  float h=height(uv), hx=height(uv+vec2(e,0.)), hy=height(uv+vec2(0.,e));
-  vec3 n=normalize(vec3((h-hx)/e*.2,(h-hy)/e*.2,1.));
-  float diff=clamp(dot(n,normalize(vec3(-.5,.6,.55))),0.,1.);
-  vec3 col=vec3(.035)+pow(diff,1.3)*vec3(.24,.23,.22)+h*vec3(.04,.035,.03);
-  col=mix(col,vec3(.075,.075,.08),smoothstep(.4,1.,uv.y)*.5);
-  vec3 gold=vec3(1.,.78,.32);
-  vec2 g=vec2(uv.x*140.-uTime*6.*(.5+h*2.),uv.y*140.);
-  float r=hash(floor(g));
-  float spark=step(.992,r)*smoothstep(.4,.08,length(fract(g)-.5))*(.5+.5*sin(uTime*3.+r*40.))*(.35+diff*1.2);
-  vec2 g2=vec2(uv.x*60.-uTime*9.,uv.y*60.+sin(uv.x*6.+uTime)*.6);
-  float r2=hash(floor(g2));
-  float dotp=step(.985,r2)*smoothstep(.22,.05,length(fract(g2)-.5));
-  col+=gold*(spark*.9+dotp*.8)*(1.+gE*3.);
-  col+=gold*uBurst*(1.-uBurst)*.5*(.4+diff);
-  col=mix(col,vec3(.043),uProg*.92);
-  vec2 vv=frag/uRes-.5; col*=1.-.35*dot(vv,vv);
+  vec3 t0=texture2D(uTex,tc).rgb;
+  float h=t0.r;
+  float hx=texture2D(uTex,tc+vec2(e,0.)).r;
+  float hz=texture2D(uTex,tc+vec2(0.,e)).r;
+  float d0=(texture2D(uDisp,suv).r-.5)*2.;
+  float dxp=texture2D(uDisp,suv+vec2(uTexel.x,0.)).r-texture2D(uDisp,suv-vec2(uTexel.x,0.)).r;
+  float dyp=texture2D(uDisp,suv+vec2(0.,uTexel.y)).r-texture2D(uDisp,suv-vec2(0.,uTexel.y)).r;
+  float dn=.35+.65*near;
+  vec3 n=normalize(vec3(-((hx-h)/e*.5+dxp*12.*dn),1.,-((hz-h)/e*.5+dyp*12.*dn)));
+  float rip=texture2D(uTex,tc*7.).g;
+  n.xz+=vec2(.05,.4)*(rip-.5)*(.2+.8*near);
+  n=normalize(n);
+  vec3 L=normalize(vec3(-.75,.3,.55));
+  float diff=max(dot(n,L),0.)*(1.+(rip-.5)*.7*(.3+.7*near));
+  float hs=max(texture2D(uTex,tc+L.xz*.02).r,texture2D(uTex,tc+L.xz*.05).r*.9);
+  float occ=clamp((hs-h-d0*.05)*9.-.04,0.,1.);
+  float lit=diff*(1.-.75*occ);
+  vec3 sun=vec3(1.,.9,.76);
+  vec3 col=vec3(.14,.13,.12)*(sun*lit*2.3+vec3(.11,.115,.13))*(1.-clamp(-d0*.7,0.,.6));
+
+  // Wind: fine sand streaming off the crests (left to right) plus a faint low layer drifting over the surface.
+  float crest=smoothstep(.4,.85,h)*(1.-occ);
+  float s1=texture2D(uTex,vec2(tc.x*.1-uTime*.045,tc.y*1.1)).b;
+  float s2=texture2D(uTex,vec2(tc.x*.2-uTime*.09+.37,tc.y*2.3+.2)).b;
+  float stream=smoothstep(.52,.8,s1)*crest*.9+smoothstep(.55,.85,s2)*.28*(.4+.6*lit);
+  col+=sun*vec3(.3,.26,.2)*stream*(.35+.65*lit)*(.5+.5*near);
+
+  // Very sparse, subtle glints (the only gold).
+  vec2 cell=floor(w*vec2(600.,600.));
+  float r=hash(cell);
+  float tw=.5+.5*sin(uTime*2.+r*60.);
+  float glint=step(.9972,r)*tw*smoothstep(.1,.6,lit)*near*(1.+abs(d0)*5.);
+  col+=vec3(1.,.82,.52)*glint*.38;
+
+  float fog=1.-exp(-z*.09);
+  vec3 hzc=vec3(.075,.064,.052);
+  col=mix(col,hzc,fog*.85);
+  vec3 sky=mix(vec3(.016,.016,.018),hzc*1.05,exp(dy*10.)*.85);
+  col=mix(sky,col,smoothstep(-.004,.004,dy));
+  col=mix(col,vec3(.043),clamp(uProg*.92+smoothstep(.55,1.,uBurst),0.,1.));
+  vec2 vv=suv-.5; col*=1.-.4*dot(vv,vv);
   gl_FragColor=vec4(col,1.);
 }`;
-  const VERT = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
 
   const landing = document.getElementById('landing');
   const canvas = document.getElementById('landing-canvas') as HTMLCanvasElement | null;
@@ -120,51 +147,62 @@ void main(){
     if (!s) return null;
     gl.shaderSource(s, src);
     gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
-      gl.deleteShader(s);
-      return null;
-    }
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { gl.deleteShader(s); return null; }
     return s;
+  }
+  function program(gl: WebGLRenderingContext, frag: string): WebGLProgram | null {
+    const vs = compile(gl, gl.VERTEX_SHADER, VERT), fs = compile(gl, gl.FRAGMENT_SHADER, frag), pr = gl.createProgram();
+    if (!vs || !fs || !pr) return null;
+    gl.attachShader(pr, vs); gl.attachShader(pr, fs); gl.bindAttribLocation(pr, 0, 'p'); gl.linkProgram(pr);
+    return gl.getProgramParameter(pr, gl.LINK_STATUS) ? pr : null;
   }
 
   function init(landing: HTMLElement, canvas: HTMLCanvasElement, enterBtn: HTMLButtonElement) {
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const coarse = matchMedia('(pointer: coarse)').matches || innerWidth < 700;
-    const MAXP = coarse ? 6 : 12;
     const dpr = Math.min(devicePixelRatio || 1, 2);
-    const maxScale = coarse ? 0.6 : 0.85;
-    let scale = maxScale;
+    const budget = coarse ? 380000 : 550000; // render pixels, upscaled by CSS
+    let quality = 1;
 
     const store = document.getElementById('store');
     let entering = false;
     let burstStart = -1;
     let rafScroll = 0;
-
-    const gl = canvas.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'low-power' });
-    let running = !!gl;
-    const buf = new Float32Array(MAXP * 4).fill(-1);
-    let next = 0;
     const t0 = performance.now();
     const clock = () => ((performance.now() - t0) / 1000) * (reduced ? 0.35 : 1);
 
+    // ---- touch displacement field (CPU, low resolution, decays) ----
+    let gw = 1, gh = 1;
+    let field = new Float32Array(1);
+    let out = new Uint8Array(1);
+    const ripples: { x: number; y: number; t: number }[] = [];
+    let lastInput = -1e9;
     let cssW = 1, cssH = 1;
-    const resize = () => {
-      cssW = landing.clientWidth; cssH = landing.clientHeight;
-      canvas.width = Math.max(1, Math.round(cssW * dpr * scale));
-      canvas.height = Math.max(1, Math.round(cssH * dpr * scale));
-      gl?.viewport(0, 0, canvas.width, canvas.height);
-    };
+    const gl = canvas.getContext('webgl', { antialias: false, alpha: false, depth: false, stencil: false, powerPreference: 'low-power' });
 
-    function addPoint(clientX: number, clientY: number, ripple: boolean) {
+    const toGrid = (cx: number, cy: number) => {
       const r = landing.getBoundingClientRect();
-      const i = (next++ % MAXP) * 4;
-      buf[i] = (clientX - r.left) / cssH;
-      buf[i + 1] = 1 - (clientY - r.top) / cssH;
-      buf[i + 2] = clock();
-      buf[i + 3] = ripple ? -1 : 1;
+      return { x: ((cx - r.left) / cssW) * gw, y: (1 - (cy - r.top) / cssH) * gh };
+    };
+    function trail(cx: number, cy: number) {
+      const g = toGrid(cx, cy);
+      const rad = 2.4;
+      for (let j = Math.max(0, Math.floor(g.y - 4)); j <= Math.min(gh - 1, Math.ceil(g.y + 4)); j++) {
+        for (let i = Math.max(0, Math.floor(g.x - 4)); i <= Math.min(gw - 1, Math.ceil(g.x + 4)); i++) {
+          const d2 = (i - g.x) ** 2 + (j - g.y) ** 2;
+          const k = j * gw + i;
+          field[k] = Math.max(-1, field[k]! - 0.8 * Math.exp(-d2 / (rad * rad)));
+        }
+      }
+      lastInput = performance.now();
+    }
+    function ripple(cx: number, cy: number) {
+      const g = toGrid(cx, cy);
+      ripples.push({ x: g.x, y: g.y, t: performance.now() });
+      if (ripples.length > 4) ripples.shift();
+      lastInput = performance.now();
     }
 
-    // Touch + mouse. Listeners are passive and never block native scrolling.
     const last = new Map<number, { x: number; y: number; sx: number; sy: number; st: number }>();
     const onTouch = (e: TouchEvent, phase: 'start' | 'move' | 'end') => {
       const list = phase === 'end' ? e.changedTouches : e.touches;
@@ -173,15 +211,12 @@ void main(){
         const s = last.get(t.identifier);
         if (phase === 'start') {
           last.set(t.identifier, { x: t.clientX, y: t.clientY, sx: t.clientX, sy: t.clientY, st: performance.now() });
-          addPoint(t.clientX, t.clientY, false);
+          trail(t.clientX, t.clientY);
         } else if (phase === 'move' && s) {
-          if (Math.hypot(t.clientX - s.x, t.clientY - s.y) > 14) {
-            addPoint(t.clientX, t.clientY, false);
-            s.x = t.clientX; s.y = t.clientY;
-          }
+          if (Math.hypot(t.clientX - s.x, t.clientY - s.y) > 10) { trail(t.clientX, t.clientY); s.x = t.clientX; s.y = t.clientY; }
         } else if (phase === 'end' && s) {
           const tap = Math.hypot(t.clientX - s.sx, t.clientY - s.sy) < 12 && performance.now() - s.st < 350;
-          if (tap && !(e.target as Element).closest('button')) addPoint(t.clientX, t.clientY, true);
+          if (tap && !(e.target as Element).closest('button')) ripple(t.clientX, t.clientY);
           last.delete(t.identifier);
         }
       }
@@ -191,34 +226,24 @@ void main(){
     landing.addEventListener('touchend', (e) => onTouch(e, 'end'), { passive: true });
     landing.addEventListener('touchcancel', (e) => onTouch(e, 'end'), { passive: true });
     let lm = 0;
-    landing.addEventListener('mousemove', (e) => {
-      const n = performance.now();
-      if (n - lm > 35) { lm = n; addPoint(e.clientX, e.clientY, false); }
-    });
-    landing.addEventListener('click', (e) => {
-      if (e.detail > 0 && !(e.target as Element).closest('button')) addPoint(e.clientX, e.clientY, true);
-    });
+    landing.addEventListener('mousemove', (e) => { const n = performance.now(); if (n - lm > 30) { lm = n; trail(e.clientX, e.clientY); } });
+    landing.addEventListener('click', (e) => { if (e.detail > 0 && !(e.target as Element).closest('button')) ripple(e.clientX, e.clientY); });
 
-    // Entering the store: button or first wheel gesture. Touch users scroll natively (CSS snap helps).
+    // ---- entering the store: button or first desktop wheel gesture; touch users scroll natively (CSS snap helps) ----
     const ease = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
-    const finish = () => {
-      cancelAnimationFrame(rafScroll);
-      entering = false; burstStart = -1; enterBtn.disabled = false; enterBtn.removeAttribute('aria-busy');
-    };
+    const finish = () => { cancelAnimationFrame(rafScroll); entering = false; burstStart = -1; enterBtn.disabled = false; enterBtn.removeAttribute('aria-busy'); };
     const enter = () => {
       if (entering || !store) return;
       const target = store.getBoundingClientRect().top + scrollY;
       if (reduced) { scrollTo(0, target); return; }
       entering = true; enterBtn.disabled = true; enterBtn.setAttribute('aria-busy', 'true');
       burstStart = performance.now();
-      const from = scrollY, dur = 1300;
-      const html = document.documentElement;
+      const from = scrollY, dur = 1300, html = document.documentElement;
       html.style.scrollSnapType = 'none';
       const step = (now: number) => {
         const k = Math.min(1, (now - burstStart) / dur);
         scrollTo(0, from + (target - from) * ease(k));
-        if (k < 1) rafScroll = requestAnimationFrame(step);
-        else { html.style.scrollSnapType = ''; finish(); }
+        if (k < 1) rafScroll = requestAnimationFrame(step); else { html.style.scrollSnapType = ''; finish(); }
       };
       rafScroll = requestAnimationFrame(step);
     };
@@ -231,7 +256,6 @@ void main(){
     addEventListener('touchstart', abort, { passive: true });
     addEventListener('keydown', abort);
 
-    // Scroll-driven reveal: --p drives the content fade and the shader's fade towards the store colour.
     let progress = 0;
     const readProgress = () => {
       progress = Math.min(1, Math.max(0, scrollY / (landing.offsetHeight * 0.9)));
@@ -241,56 +265,124 @@ void main(){
     readProgress();
 
     if (!gl) return;
-    const vs = compile(gl, gl.VERTEX_SHADER, VERT);
-    const fs = compile(gl, gl.FRAGMENT_SHADER, FRAG.replace(/__MAXP__/g, String(MAXP)).replace(/__OCT__/g, coarse ? '3' : '4'));
-    const prog = gl.createProgram();
-    if (!vs || !fs || !prog) return;
-    gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return;
-    gl.useProgram(prog);
-    const vb = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vb);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-    const loc = gl.getAttribLocation(prog, 'p');
-    gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    const uRes = gl.getUniformLocation(prog, 'uRes');
-    const uTime = gl.getUniformLocation(prog, 'uTime');
-    const uProg = gl.getUniformLocation(prog, 'uProg');
-    const uBurst = gl.getUniformLocation(prog, 'uBurst');
-    const uPts = gl.getUniformLocation(prog, 'uPts');
+    const bake = program(gl, BAKE), main = program(gl, FRAG);
+    if (!bake || !main) return;
 
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+    // One-off bake of the tileable dune heightmap (R: dunes, G: wind ripples, B: streak noise).
+    const SIZE = 512;
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, SIZE, SIZE, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    const fbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) return;
+    gl.viewport(0, 0, SIZE, SIZE);
+    gl.useProgram(bake);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+
+    const dispTex = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, dispTex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+
+    gl.useProgram(main);
+    const U = (n: string) => gl.getUniformLocation(main, n);
+    const uRes = U('uRes'), uTexel = U('uTexel'), uTime = U('uTime'), uProg = U('uProg'), uBurst = U('uBurst'), uCam = U('uCam');
+    gl.uniform1i(U('uTex'), 0);
+    gl.uniform1i(U('uDisp'), 1);
+
+    const resize = () => {
+      cssW = Math.max(1, landing.clientWidth); cssH = Math.max(1, landing.clientHeight);
+      const s = Math.min(1, Math.sqrt((budget * quality) / (cssW * cssH * dpr * dpr)));
+      canvas.width = Math.max(1, Math.round(cssW * dpr * s));
+      canvas.height = Math.max(1, Math.round(cssH * dpr * s));
+      gw = Math.min(128, Math.ceil(cssW / 14)); gh = Math.min(192, Math.ceil(cssH / 14));
+      field = new Float32Array(gw * gh);
+      out = new Uint8Array(gw * gh).fill(128);
+      gl.activeTexture(gl.TEXTURE1);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, gw, gh, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, out);
+      gl.uniform2f(uTexel, 1 / gw, 1 / gh);
+      gl.viewport(0, 0, canvas.width, canvas.height);
+    };
     resize();
-    addEventListener('resize', () => { resize(); });
+    let rt = 0;
+    addEventListener('resize', () => { clearTimeout(rt); rt = window.setTimeout(resize, 120); });
     canvas.classList.add('on');
 
-    let visible = true, raf = 0, frames = 0, acc = 0, prev = 0;
+    let visible = true, running = true, frames = 0, acc = 0, prev = 0, lastDraw = 0, lastFrame = 0, dirty = false;
     new IntersectionObserver(([en]) => { visible = !!en?.isIntersecting; }).observe(landing);
     canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); running = false; canvas.classList.remove('on'); });
 
+    function updateField(now: number, dt: number) {
+      const active = ripples.length > 0 || now - lastInput < 4000;
+      if (!active && !dirty) return;
+      const decay = Math.exp(-dt * 0.7);
+      for (let k = 0; k < field.length; k++) field[k] = field[k]! * decay;
+      for (let k = ripples.length - 1; k >= 0; k--) if (now - ripples[k]!.t > 3000) ripples.splice(k, 1);
+      for (let j = 0; j < gh; j++) {
+        for (let i = 0; i < gw; i++) {
+          const k = j * gw + i;
+          let v = field[k]!;
+          for (const r of ripples) {
+            const age = (now - r.t) / 1000;
+            const x = (Math.hypot(i - r.x, j - r.y) - age * 9) / 1.7;
+            v += 0.5 * Math.exp(-age * 1.3) * Math.exp(-x * x) * Math.cos(x * 2);
+          }
+          out[k] = Math.max(0, Math.min(255, Math.round(128 + 127 * v)));
+        }
+      }
+      gl!.activeTexture(gl!.TEXTURE1);
+      gl!.texSubImage2D(gl!.TEXTURE_2D, 0, 0, 0, gw, gh, gl!.LUMINANCE, gl!.UNSIGNED_BYTE, out);
+      dirty = ripples.length > 0 || field.some((f) => Math.abs(f) > 0.004);
+    }
+
     const frame = (now: number) => {
-      raf = requestAnimationFrame(frame);
+      requestAnimationFrame(frame);
       if (!running || !visible || document.hidden) { prev = 0; return; }
+      const busy = now - lastInput < 1500 || burstStart >= 0 || ripples.length > 0 || (progress > 0 && progress < 1);
+      if (now - lastDraw < (busy ? 15 : 32)) return;
+      const dt = Math.min(0.1, (now - (lastFrame || now)) / 1000);
+      lastFrame = now;
       if (prev) {
         acc += now - prev; frames++;
-        if (frames === 45) {
+        if (frames === 40) {
           const avg = acc / frames;
-          if (avg > 24 && scale > 0.35) { scale *= 0.8; resize(); }
-          else if (avg < 13 && scale < maxScale) { scale = Math.min(maxScale, scale * 1.1); resize(); }
+          const target = busy ? 18 : 36;
+          if (avg > target * 1.35 && quality > 0.3) { quality *= 0.75; resize(); }
           frames = 0; acc = 0;
         }
       }
-      prev = now;
-      const burst = burstStart < 0 ? 0 : Math.min(1, (now - burstStart) / 1300);
+      prev = now; lastDraw = now;
+      updateField(now, dt);
+      const burst = burstStart < 0 ? 0 : ease(Math.min(1, (now - burstStart) / 1300));
       gl.uniform2f(uRes, canvas.width, canvas.height);
       gl.uniform1f(uTime, clock());
       gl.uniform1f(uProg, progress);
-      gl.uniform1f(uBurst, ease(burst));
-      gl.uniform4fv(uPts, buf);
+      gl.uniform1f(uBurst, burst);
+      gl.uniform1f(uCam, progress * 1.2 + burst * 4);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     };
-    raf = requestAnimationFrame(frame);
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) prev = 0; });
-    void raf;
+    requestAnimationFrame(frame);
+    document.addEventListener('visibilitychange', () => { prev = 0; lastFrame = 0; });
   }
 </script>
