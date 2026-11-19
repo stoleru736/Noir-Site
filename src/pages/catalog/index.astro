@@ -1,0 +1,57 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { catalog, genderLabels } from '../../data/site';
+
+const unique = (key: 'category' | 'color') => [...new Set(catalog.map((p) => p[key]))];
+const colors = [...new Map(catalog.map((p) => [p.color, p.colorLabel])).entries()];
+---
+
+<Base title="Catalog — NOIR" description="Catalogul NOIR: filtrează după gen, categorie și culoare.">
+  <h1>Catalog</h1>
+  <form class="filters" id="filters">
+    <label>Gen
+      <select name="gender">
+        <option value="">Toate</option>
+        {Object.entries(genderLabels).map(([v, l]) => <option value={v}>{l}</option>)}
+      </select>
+    </label>
+    <label>Categorie
+      <select name="category">
+        <option value="">Toate</option>
+        {unique('category').map((v) => <option value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}</option>)}
+      </select>
+    </label>
+    <label>Culoare
+      <select name="color">
+        <option value="">Toate</option>
+        {colors.map(([v, l]) => <option value={v}>{l}</option>)}
+      </select>
+    </label>
+  </form>
+  <ul class="grid" id="grid">
+    {catalog.map((p) => <ProductCard product={p} />)}
+  </ul>
+  <p class="empty" id="empty" hidden>Niciun model pentru filtrele alese.</p>
+  <script>
+    const form = document.getElementById('filters') as HTMLFormElement;
+    const items = document.querySelectorAll<HTMLElement>('#grid > li');
+    const empty = document.getElementById('empty') as HTMLElement;
+    const keys = ['gender', 'category', 'color'] as const;
+    const apply = () => {
+      const data = new FormData(form);
+      let shown = 0;
+      items.forEach((li) => {
+        const ok = keys.every((k) => {
+          const v = data.get(k);
+          return !v || li.dataset[k] === v;
+        });
+        li.hidden = !ok;
+        if (ok) shown++;
+      });
+      empty.hidden = shown > 0;
+    };
+    form.addEventListener('change', apply);
+    form.addEventListener('submit', (e) => e.preventDefault());
+  </script>
+</Base>

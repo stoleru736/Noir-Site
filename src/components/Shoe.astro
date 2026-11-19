@@ -1,0 +1,18 @@
+---
+interface Props {
+  hex: string;
+  view?: number;
+  label: string;
+}
+const { hex, view = 0, label } = Astro.props;
+const bgs = ['#141414', '#1c1c1c', '#101010'];
+const bg = bgs[view % bgs.length];
+---
+
+<svg viewBox="0 0 400 400" width="400" height="400" role="img" aria-label={label} xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="400" fill={bg}></rect>
+  <g transform={view === 1 ? 'translate(400 0) scale(-1 1)' : view === 2 ? 'translate(0 40) scale(1 .85)' : ''}>
+    <path d="M60 250 C60 210 90 200 120 190 L150 140 C165 125 185 130 195 145 L215 175 C250 190 300 200 335 225 C345 232 345 250 335 258 L65 262 Z" fill={hex}></path>
+    <rect x="58" y="258" width="284" height="22" rx="11" fill="#e8e4dc"></rect>
+  </g>
+</svg>

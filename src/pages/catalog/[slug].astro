@@ -1,0 +1,76 @@
+---
+import Base from '../../layouts/Base.astro';
+import Shoe from '../../components/Shoe.astro';
+import { catalog, genderLabels, stockLabels, whatsappLink } from '../../data/site';
+
+export function getStaticPaths() {
+  return catalog.map((product) => ({ params: { slug: product.slug }, props: { product } }));
+}
+
+const { product: p } = Astro.props;
+const views = [0, 1, 2];
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: p.name,
+  description: p.description,
+  color: p.colorLabel,
+  brand: { '@type': 'Brand', name: 'NOIR' },
+  offers: {
+    '@type': 'Offer',
+    priceCurrency: 'RON',
+    price: p.price,
+    availability: p.stock === 'stock' ? 'https://schema.org/InStock' : 'https://schema.org/PreOrder',
+  },
+};
+const orderBase = `Salut! Vreau să comand ${p.name} (${p.colorLabel}), mărimea `;
+---
+
+<Base title={`${p.name} — NOIR`} description={p.description} jsonLd={jsonLd}>
+  <article class="product">
+    <div class="gallery">
+      {views.map((v) => (
+        <div data-view={v} hidden={v !== 0}><Shoe hex={p.hex} view={v} label={`${p.name}, vedere ${v + 1}`} /></div>
+      ))}
+      <div class="thumbs">
+        {views.map((v) => (
+          <button type="button" data-thumb={v} aria-label={`Vedere ${v + 1}`} aria-current={v === 0}>
+            <Shoe hex={p.hex} view={v} label="" />
+          </button>
+        ))}
+      </div>
+    </div>
+    <div>
+      <p class="note">{genderLabels[p.gender]} · {p.category.charAt(0).toUpperCase() + p.category.slice(1)} · {p.colorLabel}</p>
+      <h1>{p.name}</h1>
+      <p>{p.price} lei · <strong>{stockLabels[p.stock]}</strong></p>
+      <p>{p.description}</p>
+      <fieldset class="sizes" style="border:0;padding:0">
+        <legend>Mărime</legend>
+        {p.sizes.map((s, i) => (
+          <label><input type="radio" name="size" value={s} checked={i === 0} />{s}</label>
+        ))}
+      </fieldset>
+      <a class="btn solid" id="order" href={whatsappLink(orderBase + p.sizes[0])} data-base={orderBase} data-phone="40750437127">Comandă pe WhatsApp</a>
+      <p class="note">{p.stock === 'stock'
+        ? 'Livrare 1–2 zile, plată ramburs.'
+        : 'Pre-order: livrare 9–21 zile, avans 10%.'} <a href="/garantie/">Detalii garanție</a></p>
+    </div>
+  </article>
+  <script>
+    const views = document.querySelectorAll<HTMLElement>('[data-view]');
+    const thumbs = document.querySelectorAll<HTMLElement>('[data-thumb]');
+    thumbs.forEach((t) =>
+      t.addEventListener('click', () => {
+        views.forEach((v) => (v.hidden = v.dataset.view !== t.dataset.thumb));
+        thumbs.forEach((o) => o.setAttribute('aria-current', String(o === t)));
+      }),
+    );
+    const order = document.getElementById('order') as HTMLAnchorElement;
+    document.querySelectorAll<HTMLInputElement>('input[name=size]').forEach((r) =>
+      r.addEventListener('change', () => {
+        order.href = `https://wa.me/${order.dataset.phone}?text=${encodeURIComponent((order.dataset.base ?? '') + r.value)}`;
+      }),
+    );
+  </script>
+</Base>
