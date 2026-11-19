@@ -35,11 +35,10 @@ const lookupJson = JSON.stringify(lookup).replace(/</g, '\\u003c');
   </head>
   <body>
     <a class="skip" href="#main">Sari la conținut</a>
-    <slot name="landing" />
     <div id="store">
       <header class="site">
         <div class="wrap bar">
-          <a class="logo" href="/" aria-label={`${BRAND}, acasă`}>{BRAND}</a>
+          <a class="logo" href="/magazin/" aria-label={`${BRAND}, acasă`}>{BRAND}</a>
           <nav aria-label="Principal" class="icons">
             <a class="textlink" href="/catalog/">Catalog</a>
             <button type="button" class="icon" id="search-toggle" aria-label="Caută" aria-expanded="false" aria-controls="searchbar">

@@ -47,7 +47,7 @@ select{background:var(--bg);color:var(--fg);border:1px solid var(--line);padding
 
 /* --- Mobile-first store (NOIR) --- */
 body{overflow-x:clip}
-header.site{position:sticky;top:0;z-index:20;background:rgba(11,11,11,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+header.site{position:sticky;top:0;z-index:20;background:#0b0b0b}
 header.site .bar{height:56px}
 .logo{font-size:.8rem;letter-spacing:.3em;white-space:nowrap}
 .icons{display:flex;align-items:center;gap:.1rem}
@@ -101,3 +101,5 @@ footer p{margin:.25rem 0}
   .buybar{position:static;border:0;padding:0;margin:1rem 0 .5rem}
   .buybar .btn{flex:0 0 auto;min-width:240px}
 }
+
+@view-transition{navigation:auto}
