@@ -1,7 +1,19 @@
 ---
 import Base from '../layouts/Base.astro';
+import ProductCard from '../components/ProductCard.astro';
+import { catalog } from '../data/site';
 ---
 
-<Base title="Noir" description="Photography portfolio.">
-  <h1>Noir</h1>
+<Base title="NOIR — Sneakers" description="NOIR: sneakers într-o estetică închisă, minimală. Comandă simplu pe WhatsApp.">
+  <section class="hero">
+    <h1>Sneakers.<br />Fără zgomot.</h1>
+    <p>Colecția NOIR: siluete curate, culori sobre. Alegi modelul, ne scrii pe WhatsApp, iar noi ne ocupăm de restul.</p>
+    <p><a class="btn" href="/catalog/">Vezi catalogul</a></p>
+  </section>
+  <section aria-labelledby="noutati">
+    <h2 id="noutati">Noutăți</h2>
+    <ul class="grid">
+      {catalog.slice(0, 4).map((p) => <ProductCard product={p} />)}
+    </ul>
+  </section>
 </Base>

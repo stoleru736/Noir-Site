@@ -1,0 +1,159 @@
+[
+  {
+    "slug": "noir-vanta",
+    "name": "NOIR Vanta",
+    "gender": "barbati",
+    "category": "low",
+    "color": "negru",
+    "colorLabel": "Negru",
+    "hex": "#1a1a1a",
+    "price": 499,
+    "stock": "stock",
+    "description": "Sneakers low din colecția NOIR, în nuanța negru. Siluetă curată, finisaje sobre, purtare de zi cu zi.",
+    "sizes": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+    ]
+  },
+  {
+    "slug": "noir-ash",
+    "name": "NOIR Ash",
+    "gender": "barbati",
+    "category": "low",
+    "color": "gri",
+    "colorLabel": "Gri",
+    "hex": "#6b6b6b",
+    "price": 499,
+    "stock": "stock",
+    "description": "Sneakers low din colecția NOIR, în nuanța gri. Siluetă curată, finisaje sobre, purtare de zi cu zi.",
+    "sizes": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+    ]
+  },
+  {
+    "slug": "noir-onyx",
+    "name": "NOIR Onyx",
+    "gender": "unisex",
+    "category": "high",
+    "color": "negru",
+    "colorLabel": "Negru",
+    "hex": "#1a1a1a",
+    "price": 549,
+    "stock": "stock",
+    "description": "Sneakers high din colecția NOIR, în nuanța negru. Siluetă curată, finisaje sobre, purtare de zi cu zi.",
+    "sizes": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+    ]
+  },
+  {
+    "slug": "noir-bone",
+    "name": "NOIR Bone",
+    "gender": "unisex",
+    "category": "low",
+    "color": "alb",
+    "colorLabel": "Alb",
+    "hex": "#e8e4dc",
+    "price": 479,
+    "stock": "stock",
+    "description": "Sneakers low din colecția NOIR, în nuanța alb. Siluetă curată, finisaje sobre, purtare de zi cu zi.",
+    "sizes": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+    ]
+  },
+  {
+    "slug": "noir-ember",
+    "name": "NOIR Ember",
+    "gender": "barbati",
+    "category": "chunky",
+    "color": "maro",
+    "colorLabel": "Maro",
+    "hex": "#6b4a35",
+    "price": 599,
+    "stock": "preorder",
+    "description": "Sneakers chunky din colecția NOIR, în nuanța maro. Siluetă curată, finisaje sobre, purtare de zi cu zi.",
+    "sizes": [
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+    ]
+  },
+  {
+    "slug": "noir-mist",
+    "name": "NOIR Mist",
+    "gender": "dama",
+    "category": "low",
+    "color": "gri",
+    "colorLabel": "Gri",
+    "hex": "#6b6b6b",
+    "price": 479,
+    "stock": "stock",
+    "description": "Sneakers low din colecția NOIR, în nuanța gri. Siluetă curată, finisaje sobre, purtare de zi cu zi.",
+    "sizes": [
+      36,
+      37,
+      38,
+      39,
+      40
+    ]
+  },
+  {
+    "slug": "noir-rose",
+    "name": "NOIR Rose",
+    "gender": "dama",
+    "category": "chunky",
+    "color": "roz",
+    "colorLabel": "Roz",
+    "hex": "#c9a0a0",
+    "price": 579,
+    "stock": "preorder",
+    "description": "Sneakers chunky din colecția NOIR, în nuanța roz. Siluetă curată, finisaje sobre, purtare de zi cu zi.",
+    "sizes": [
+      36,
+      37,
+      38,
+      39,
+      40
+    ]
+  },
+  {
+    "slug": "noir-eclipse",
+    "name": "NOIR Eclipse",
+    "gender": "dama",
+    "category": "high",
+    "color": "negru",
+    "colorLabel": "Negru",
+    "hex": "#1a1a1a",
+    "price": 529,
+    "stock": "stock",
+    "description": "Sneakers high din colecția NOIR, în nuanța negru. Siluetă curată, finisaje sobre, purtare de zi cu zi.",
+    "sizes": [
+      36,
+      37,
+      38,
+      39,
+      40
+    ]
+  }
+]

@@ -1,0 +1,18 @@
+---
+import Shoe from './Shoe.astro';
+import { stockLabels, type Product } from '../data/site';
+
+interface Props {
+  product: Product;
+}
+const { product: p } = Astro.props;
+---
+
+<li data-gender={p.gender} data-category={p.category} data-color={p.color}>
+  <a class="card" href={`/catalog/${p.slug}/`}>
+    <span class="badge">{stockLabels[p.stock]}</span>
+    <Shoe hex={p.hex} label={p.name} />
+    <h3>{p.name}</h3>
+    <span class="price">{p.price} lei</span>
+  </a>
+</li>
