@@ -4,7 +4,7 @@ Production photography website for Marian. Standing rules live in the project in
 
 ## Stack
 - Astro 7 (static output, TypeScript strictest), npm, Node >=22.23.4. Hosting: Cloudflare Pages. Original photos: Cloudflare R2 (outside Git); derivatives via Astro image tooling + `sharp`.
-- Sitemap via `@astrojs/sitemap`; set the real domain in `astro.config.mjs` and `public/robots.txt` before launch.
+- Sitemap via `@astrojs/sitemap`; production URL https://noir-site-3iw.pages.dev is set in `astro.config.mjs` and `public/robots.txt`; update both if a custom domain is added.
 
 ## Commands
 - `npm run dev` / `build` / `preview`
