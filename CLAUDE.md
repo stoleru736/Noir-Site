@@ -2,9 +2,14 @@
 
 Production photography website for Marian. Standing rules live in the project instructions; this file holds only repo-specific facts.
 
-## Status
-- Stack NOT decided yet (repo has only README.md). Do not assume a framework, runtime or package manager; inspect `package.json` / config before acting once they exist.
-- Update this file with real commands (dev, build, lint, typecheck, test) when they are added.
+## Stack
+- Astro 7 (static output, TypeScript strictest), npm, Node >=22.23.4. Hosting: Cloudflare Pages. Original photos: Cloudflare R2 (outside Git); derivatives via Astro image tooling + `sharp`.
+- Sitemap via `@astrojs/sitemap`; set the real domain in `astro.config.mjs` and `public/robots.txt` before launch.
+
+## Commands
+- `npm run dev` / `build` / `preview`
+- `npm run check` (astro check, typecheck) / `npm run lint` (eslint)
+- No test runner yet.
 
 ## Working rules
 - Reply to Marian in Romanian, concise, no filler. Code, identifiers, comments and docs in English.
