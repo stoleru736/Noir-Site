@@ -7,7 +7,7 @@
 </section>
 
 <style>
-  .intro{position:relative;width:100vw;margin-left:calc(50% - 50vw);height:calc(100svh - 64px);height:calc(100dvh - 64px);min-height:420px;touch-action:pan-y;background:#0b0b0b;overflow:hidden}
+  .intro{position:relative;width:100vw;margin-left:calc(50% - 50vw);height:calc(100svh - 64px);height:calc(100dvh - 64px);min-height:420px;background:#0b0b0b;overflow:hidden}
   .intro[hidden]{display:none}
   canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
   .intro-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2rem;pointer-events:none}
@@ -24,7 +24,8 @@
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const ctx = canvas.getContext('2d');
 
-  if (!reduced && ctx) {
+  // Always shown. With reduced motion the sand moves slower and ignores the pointer.
+  if (ctx) {
     intro.hidden = false;
     run(ctx);
   }
@@ -35,7 +36,7 @@
     const dpr = Math.min(devicePixelRatio || 1, 2);
     let w = 0, h = 0;
     const resize = () => {
-      w = intro.clientWidth; h = intro.clientHeight;
+      w = Math.min(intro.clientWidth, 3000); h = Math.min(intro.clientHeight, 3000);
       canvas.width = w * dpr; canvas.height = h * dpr;
       c.setTransform(dpr, 0, 0, dpr, 0, 0);
       c.fillStyle = '#0b0b0b'; c.fillRect(0, 0, w, h);
@@ -59,10 +60,16 @@
     // Pointer (mouse or touch) pushes sand away.
     let mx = -9999, my = -9999;
     const move = (x: number, y: number) => { const r = intro.getBoundingClientRect(); mx = x - r.left; my = y - r.top; };
-    intro.addEventListener('pointermove', (e) => move(e.clientX, e.clientY));
-    intro.addEventListener('pointerdown', (e) => move(e.clientX, e.clientY));
-    intro.addEventListener('pointerleave', () => { mx = -9999; });
-    intro.addEventListener('pointerup', () => { mx = -9999; });
+    const off = () => { mx = -9999; };
+    if (!reduced) {
+      intro.addEventListener('mousemove', (e) => move(e.clientX, e.clientY));
+      intro.addEventListener('mouseleave', off);
+      const touch = (e: TouchEvent) => { const t0 = e.touches[0]; if (t0) move(t0.clientX, t0.clientY); };
+      intro.addEventListener('touchstart', touch, { passive: true });
+      intro.addEventListener('touchmove', touch, { passive: true });
+      intro.addEventListener('touchend', off);
+      intro.addEventListener('touchcancel', off);
+    }
 
     let t = 0, raf = 0, visible = true, last = 0;
     const field = (x: number, y: number) =>
@@ -72,14 +79,14 @@
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
       if (!visible || now - last < 16) return;
-      last = now; t += 0.008;
+      last = now; t += reduced ? 0.003 : 0.008;
       c.fillStyle = 'rgba(11,11,11,0.09)';
       c.fillRect(0, 0, w, h);
       const R = mobile ? 90 : 140;
       for (let i = 0; i < count; i++) {
         let x = px[i]!, y = py[i]!;
         const a = field(x, y);
-        const s = sp[i]!;
+        const s = sp[i]! * (reduced ? 0.4 : 1);
         x += Math.cos(a) * 1.8 * s + 0.3;
         y += Math.sin(a) * 1.8 * s;
         const dx = x - mx, dy = y - my, d2 = dx * dx + dy * dy;
