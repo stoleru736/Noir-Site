@@ -145,59 +145,34 @@ function initReveal(): void {
   });
 }
 
-// ---- Hero plate: scan lines with a drifting orange bloom ----------------------------------------------------------
+// ---- Hero plate: scan lines, drawn once (the drifting orange bloom is a compositor-animated CSS layer) -------------
 function initScan(canvas: HTMLCanvasElement): void {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
-  let W = 0;
-  let H = 0;
-  let dpr = 1;
-  let running = false;
-
-  const size = (): void => {
-    dpr = Math.min(devicePixelRatio || 1, 1.5);
+  const draw = (): void => {
+    const dpr = Math.min(devicePixelRatio || 1, 1.5);
     const r = canvas.getBoundingClientRect();
-    W = canvas.width = Math.max(1, Math.round(r.width * dpr));
-    H = canvas.height = Math.max(1, Math.round(r.height * dpr));
-  };
-  const draw = (t: number): void => {
+    const W = (canvas.width = Math.max(1, Math.round(r.width * dpr)));
+    const H = (canvas.height = Math.max(1, Math.round(r.height * dpr)));
     ctx.clearRect(0, 0, W, H);
-    const bx = (((t * 0.000045) % 1.5) - 0.25) * W;
-    const g = ctx.createLinearGradient(bx - 0.42 * W, 0, bx + 0.42 * W, 0);
-    g.addColorStop(0, 'rgba(255,77,0,0)');
-    g.addColorStop(0.5, 'rgba(255,77,0,0.3)');
-    g.addColorStop(1, 'rgba(255,77,0,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = '#fff';
     const step = 5 * dpr;
     const h = Math.max(1, Math.round(dpr));
     let i = 0;
     for (let y = 0; y < H; y += step, i++) {
       ctx.globalAlpha = 0.03 + 0.04 * hash(i + 1);
-      ctx.fillRect(Math.sin(t * 0.0007 + i * 0.9) * 3 * dpr - 4, y, W + 8, h);
+      ctx.fillRect(0, y, W, h);
     }
     ctx.globalAlpha = 1;
   };
-  let last = 0;
-  const loop = (t: number): void => {
-    if (!running) return;
-    if (t - last >= 32) { last = t; draw(t); }
-    requestAnimationFrame(loop);
-  };
-  size();
-  draw(0);
+  draw();
+  let w = canvas.clientWidth;
+  let hgt = canvas.clientHeight;
   new ResizeObserver(() => {
-    size();
-    draw(performance.now());
-  }).observe(canvas);
-  if (reduced) return;
-  new IntersectionObserver((entries) => {
-    const on = entries.some((e) => e.isIntersecting);
-    if (on && !running) {
-      running = true;
-      requestAnimationFrame(loop);
-    } else if (!on) running = false;
+    if (canvas.clientWidth === w && canvas.clientHeight === hgt) return;
+    w = canvas.clientWidth;
+    hgt = canvas.clientHeight;
+    draw();
   }).observe(canvas);
 }
 
@@ -246,25 +221,35 @@ function initPlates(canvases: HTMLCanvasElement[]): void {
   size();
   addEventListener('resize', size, { passive: true });
   if (reduced) return;
-  const io = new IntersectionObserver((entries) => {
-    for (const e of entries) {
-      const p = plates.find((x) => x.canvas === e.target);
-      if (p) p.visible = e.isIntersecting;
-    }
-  });
-  plates.forEach((p) => io.observe(p.canvas));
+  // The loop only exists while at least one plate is on screen: a free-running rAF keeps the main thread producing frames.
+  let running = false;
   let last = 0;
   const loop = (t: number): void => {
-    if (t - last >= 32) {
+    if (!running) return;
+    if (t - last >= 50) {
       last = t;
       for (const p of plates) if (p.visible) paint(p, t);
     }
     requestAnimationFrame(loop);
   };
-  requestAnimationFrame(loop);
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      const p = plates.find((x) => x.canvas === e.target);
+      if (p) p.visible = e.isIntersecting;
+    }
+    const any = plates.some((p) => p.visible);
+    if (any && !running) {
+      running = true;
+      requestAnimationFrame(loop);
+    } else if (!any) running = false;
+  });
+  plates.forEach((p) => io.observe(p.canvas));
 }
 
 export function initPoster(): void {
+  // Opening the link must always start on the hero, never at a restored scroll position.
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  if (!location.hash) scrollTo(0, 0);
   initReveal();
   initStages();
   initEnter();

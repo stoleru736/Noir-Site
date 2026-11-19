@@ -1,0 +1,38 @@
+---
+// One shared sprite per page: every product placeholder is a <use> of this symbol, tinted with --c.
+---
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="sh-shade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".2"></stop>
+      <stop offset=".5" stop-color="#fff" stop-opacity="0"></stop>
+      <stop offset="1" stop-color="#000" stop-opacity=".35"></stop>
+    </linearGradient>
+    <radialGradient id="sh-ground" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#000" stop-opacity=".6"></stop>
+      <stop offset="1" stop-color="#000" stop-opacity="0"></stop>
+    </radialGradient>
+    <radialGradient id="sh-glow" cx=".5" cy="1" r=".75">
+      <stop offset="0" stop-color="#FF4D00" stop-opacity=".22"></stop>
+      <stop offset="1" stop-color="#FF4D00" stop-opacity="0"></stop>
+    </radialGradient>
+    <clipPath id="sh-clip"><path id="sh-upper" d="M66 248 C63 222 66 192 80 172 C88 160 106 158 120 166 C134 174 148 184 164 176 C180 168 190 142 206 130 C216 123 230 125 240 135 L262 166 C292 188 332 196 351 220 C361 231 361 243 357 248 Z"></path></clipPath>
+    <symbol id="shoe" viewBox="0 0 400 400">
+      <rect width="400" height="400" style="fill:var(--bg,#141414)" fill-opacity=".62"></rect>
+      <rect width="400" height="400" fill="url(#sh-glow)"></rect>
+      <ellipse cx="208" cy="292" rx="160" ry="12" fill="url(#sh-ground)"></ellipse>
+      <path d="M64 278 L352 278 C350 285 344 288 336 288 L84 288 C72 288 66 285 64 278 Z" fill="#9c978d"></path>
+      <path d="M58 262 C58 252 66 246 80 246 L338 246 C352 246 360 256 358 268 C357 278 348 282 336 282 L84 282 C68 282 58 274 58 262 Z" fill="#ECE8E1"></path>
+      <path d="M72 265 L346 265" stroke="#000" stroke-opacity=".1" stroke-width="2" fill="none"></path>
+      <use href="#sh-upper" style="fill:var(--c,#1a1a1a)"></use>
+      <g clip-path="url(#sh-clip)">
+        <rect x="40" y="100" width="340" height="160" fill="url(#sh-shade)"></rect>
+        <path d="M300 200 C332 202 354 224 360 250 L300 250 C305 234 305 216 300 200 Z" fill="#000" fill-opacity=".2"></path>
+        <path d="M60 250 C58 222 62 190 80 170 L104 176 C94 196 92 224 98 250 Z" fill="#000" fill-opacity=".16"></path>
+        <path d="M112 232 C166 224 232 228 296 218" stroke="#FF4D00" stroke-width="3.2" stroke-linecap="round" fill="none"></path>
+      </g>
+      <path d="M80 172 C88 160 106 158 120 166 C134 174 148 184 164 176 C180 168 190 142 206 130 C216 123 230 125 240 135 L262 166 C292 188 332 196 351 220" stroke="#fff" stroke-opacity=".18" stroke-width="1.6" fill="none"></path>
+      <path d="M201 147 L211 129 M216 156 L226 138 M231 164 L241 146 M246 172 L256 154 M261 181 L271 163" stroke="#F2F4F1" stroke-opacity=".9" stroke-width="3.4" stroke-linecap="round" fill="none"></path>
+    </symbol>
+  </defs>
+</svg>
