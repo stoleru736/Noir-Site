@@ -7,7 +7,7 @@
 </section>
 
 <style>
-  .intro{position:relative;width:100vw;margin-left:calc(50% - 50vw);height:calc(100svh - 64px);min-height:420px;background:#0b0b0b;overflow:hidden}
+  .intro{position:relative;width:100vw;margin-left:calc(50% - 50vw);height:calc(100svh - 64px);height:calc(100dvh - 64px);min-height:420px;touch-action:pan-y;background:#0b0b0b;overflow:hidden}
   .intro[hidden]{display:none}
   canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
   .intro-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2rem;pointer-events:none}
@@ -20,22 +20,18 @@
   const intro = document.getElementById('intro') as HTMLElement;
   const canvas = document.getElementById('intro-canvas') as HTMLCanvasElement;
   const skip = document.getElementById('intro-skip') as HTMLButtonElement;
-  const KEY = 'noir-intro-seen';
 
-  let seen = false;
-  try { seen = sessionStorage.getItem(KEY) === '1'; } catch { /* storage blocked */ }
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const ctx = canvas.getContext('2d');
 
-  if (!seen && !reduced && ctx) {
+  if (!reduced && ctx) {
     intro.hidden = false;
-    try { sessionStorage.setItem(KEY, '1'); } catch { /* ignore */ }
     run(ctx);
   }
 
   function run(c: CanvasRenderingContext2D) {
     const mobile = innerWidth < 700;
-    const count = mobile ? 800 : 2000;
+    const count = mobile ? 1100 : 3200;
     const dpr = Math.min(devicePixelRatio || 1, 2);
     let w = 0, h = 0;
     const resize = () => {
@@ -47,35 +43,59 @@
     resize();
     addEventListener('resize', resize);
 
-    const px = new Float32Array(count), py = new Float32Array(count), sz = new Float32Array(count), al = new Float32Array(count);
+    // Palette: warm sand with gold highlights.
+    const palette = ['214,204,186', '196,170,128', '212,175,55', '240,222,170', '150,130,100'];
+    const px = new Float32Array(count), py = new Float32Array(count), sz = new Float32Array(count);
+    const al = new Float32Array(count), sp = new Float32Array(count), col = new Uint8Array(count);
     for (let i = 0; i < count; i++) {
       px[i] = Math.random() * innerWidth; py[i] = Math.random() * innerHeight;
-      sz[i] = 0.5 + Math.random() * 1.4; al[i] = 0.25 + Math.random() * 0.6;
+      const big = Math.random() < 0.12;
+      sz[i] = big ? 1.6 + Math.random() * 1.4 : 0.5 + Math.random() * 0.9;
+      al[i] = big ? 0.8 : 0.25 + Math.random() * 0.55;
+      sp[i] = 0.7 + Math.random() * 1.6;
+      col[i] = Math.random() < 0.3 ? 2 + (Math.random() < 0.4 ? 1 : 0) : Math.floor(Math.random() * 2) + (Math.random() < 0.15 ? 3 : 0);
     }
+
+    // Pointer (mouse or touch) pushes sand away.
+    let mx = -9999, my = -9999;
+    const move = (x: number, y: number) => { const r = intro.getBoundingClientRect(); mx = x - r.left; my = y - r.top; };
+    intro.addEventListener('pointermove', (e) => move(e.clientX, e.clientY));
+    intro.addEventListener('pointerdown', (e) => move(e.clientX, e.clientY));
+    intro.addEventListener('pointerleave', () => { mx = -9999; });
+    intro.addEventListener('pointerup', () => { mx = -9999; });
 
     let t = 0, raf = 0, visible = true, last = 0;
     const field = (x: number, y: number) =>
-      Math.sin(x * 0.004 + t) * 1.6 + Math.cos(y * 0.006 - t * 0.7) * 1.6 + Math.sin((x + y) * 0.002 + t * 0.4) * 2;
+      Math.sin(x * 0.005 + t) * 1.8 + Math.cos(y * 0.007 - t * 0.8) * 1.8 +
+      Math.sin((x + y) * 0.0025 + t * 0.5) * 2.2 + Math.sin(x * 0.012 - y * 0.009 + t * 1.3) * 0.8;
 
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
       if (!visible || now - last < 16) return;
-      last = now; t += 0.004;
-      c.fillStyle = 'rgba(11,11,11,0.07)';
+      last = now; t += 0.008;
+      c.fillStyle = 'rgba(11,11,11,0.09)';
       c.fillRect(0, 0, w, h);
+      const R = mobile ? 90 : 140;
       for (let i = 0; i < count; i++) {
-        const a = field(px[i]!, py[i]!);
-        px[i]! += Math.cos(a) * 1.4 + 0.6;
-        py[i]! += Math.sin(a) * 1.4;
-        if (px[i]! > w) px[i]! = 0; else if (px[i]! < 0) px[i]! = w;
-        if (py[i]! > h) py[i]! = 0; else if (py[i]! < 0) py[i]! = h;
-        c.fillStyle = `rgba(214,204,186,${al[i]})`;
-        c.fillRect(px[i]!, py[i]!, sz[i]!, sz[i]!);
+        let x = px[i]!, y = py[i]!;
+        const a = field(x, y);
+        const s = sp[i]!;
+        x += Math.cos(a) * 1.8 * s + 0.3;
+        y += Math.sin(a) * 1.8 * s;
+        const dx = x - mx, dy = y - my, d2 = dx * dx + dy * dy;
+        if (d2 < R * R) { const d = Math.sqrt(d2) || 1, f = (1 - d / R) * 6; x += (dx / d) * f; y += (dy / d) * f; }
+        if (x > w || x < 0 || y > h || y < 0) { x = Math.random() * w; y = Math.random() * h; }
+        px[i] = x; py[i] = y;
+        c.fillStyle = `rgba(${palette[col[i]!]},${al[i]})`;
+        c.fillRect(x, y, sz[i]!, sz[i]!);
       }
     };
 
     new IntersectionObserver(([e]) => { visible = !!e?.isIntersecting; }).observe(intro);
-    document.addEventListener('visibilitychange', () => { if (document.hidden) { cancelAnimationFrame(raf); } else { raf = requestAnimationFrame(frame); } });
+    document.addEventListener('visibilitychange', () => {
+      cancelAnimationFrame(raf);
+      if (!document.hidden) raf = requestAnimationFrame(frame);
+    });
     raf = requestAnimationFrame(frame);
   }
 
