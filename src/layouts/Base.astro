@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-import { WHATSAPP_DISPLAY } from '../data/site';
+import { BRAND, WHATSAPP_DISPLAY, catalog } from '../data/site';
 
 interface Props {
   title: string;
@@ -10,13 +10,17 @@ interface Props {
 
 const { title, description, jsonLd } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
+const lookup = Object.fromEntries(
+  catalog.map((p) => [p.slug, { name: p.name, price: p.price, color: p.colorLabel, stock: p.stock }]),
+);
+const lookupJson = JSON.stringify(lookup).replace(/</g, '\\u003c');
 ---
 
 <!doctype html>
 <html lang="ro">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#0b0b0b" />
     <title>{title}</title>
     <meta name="description" content={description} />
@@ -31,20 +35,145 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   </head>
   <body>
     <a class="skip" href="#main">Sari la conținut</a>
-    <header class="site">
-      <div class="wrap">
-        <a class="logo" href="/">NOIR</a>
-        <nav aria-label="Principal">
-          <a href="/catalog/">Catalog</a>
-          <a href="/garantie/">Garanție</a>
-        </nav>
+    <slot name="landing" />
+    <div id="store">
+      <header class="site">
+        <div class="wrap bar">
+          <a class="logo" href="/" aria-label={`${BRAND}, acasă`}>{BRAND}</a>
+          <nav aria-label="Principal" class="icons">
+            <a class="textlink" href="/catalog/">Catalog</a>
+            <button type="button" class="icon" id="search-toggle" aria-label="Caută" aria-expanded="false" aria-controls="searchbar">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+            </button>
+            <a class="icon" href="/favorite/" aria-label="Favorite">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.600-7 10-7 10Z"></path></svg>
+              <span class="count" data-fav-count hidden></span>
+            </a>
+            <button type="button" class="icon" id="bag-open" aria-label="Coș">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 8h14l-1 12H6L5 8Z"></path><path d="M9 8V6a3 3 0 0 1 6 0v2"></path></svg>
+              <span class="count" data-bag-count hidden></span>
+            </button>
+          </nav>
+        </div>
+        <form class="searchbar wrap" id="searchbar" action="/catalog/" method="get" role="search" hidden>
+          <input type="search" name="q" placeholder="Caută un model…" aria-label="Caută un model" autocomplete="off" />
+          <button type="submit" class="btn">Caută</button>
+        </form>
+      </header>
+      <main id="main" class="wrap">
+        <slot />
+      </main>
+      <footer>
+        <div class="wrap">
+          <p>{BRAND} · Comenzi pe WhatsApp: {WHATSAPP_DISPLAY}</p>
+          <p><a href="/garantie/">Garanție și livrare</a></p>
+        </div>
+      </footer>
+    </div>
+
+    <dialog id="bag" aria-labelledby="bag-title">
+      <div class="bag-head"><h2 id="bag-title">Coșul tău</h2><button type="button" class="icon" id="bag-close" aria-label="Închide">✕</button></div>
+      <ul id="bag-list" class="bag-list"></ul>
+      <p id="bag-empty" class="note">Coșul e gol.</p>
+      <div id="bag-foot" hidden>
+        <p class="bag-total">Total: <strong id="bag-total"></strong></p>
+        <a class="btn solid wide" id="bag-send" href="#" rel="noopener">Trimite comanda pe WhatsApp</a>
+        <button type="button" class="linkbtn" id="bag-clear">Golește coșul</button>
+        <p class="note">Nu plătești acum. Confirmăm pe WhatsApp mărimile și livrarea.</p>
       </div>
-    </header>
-    <main id="main" class="wrap">
-      <slot />
-    </main>
-    <footer>
-      <div class="wrap">NOIR · Comenzi pe WhatsApp: {WHATSAPP_DISPLAY}</div>
-    </footer>
+    </dialog>
+
+    <script type="application/json" id="catalog-data" set:html={lookupJson} />
+    <script>
+      import { addItem, getCart, changeQty, clearCart, cartCount, getFavs, toggleFav } from '../scripts/cart';
+
+      interface Info { name: string; price: number; color: string; stock: string }
+      const info: Record<string, Info> = JSON.parse(document.getElementById('catalog-data')?.textContent ?? '{}');
+      const WA = '40750437127';
+
+      const bag = document.getElementById('bag') as HTMLDialogElement;
+      const list = document.getElementById('bag-list') as HTMLUListElement;
+      const emptyMsg = document.getElementById('bag-empty') as HTMLElement;
+      const foot = document.getElementById('bag-foot') as HTMLElement;
+      const totalEl = document.getElementById('bag-total') as HTMLElement;
+      const sendEl = document.getElementById('bag-send') as HTMLAnchorElement;
+
+      const setCount = (sel: string, n: number) => {
+        document.querySelectorAll<HTMLElement>(sel).forEach((el) => { el.textContent = String(n); el.hidden = n === 0; });
+      };
+
+      function renderBag() {
+        const items = getCart().filter((i) => info[i.slug]);
+        list.replaceChildren();
+        let total = 0;
+        const lines: string[] = [];
+        for (const i of items) {
+          const p = info[i.slug]!;
+          total += p.price * i.qty;
+          lines.push(`- ${p.name} (${p.color}), mărimea ${i.size} x${i.qty}${p.stock === 'preorder' ? ' [pre-order]' : ''}`);
+          const li = document.createElement('li');
+          const name = document.createElement('div');
+          name.className = 'bag-name';
+          name.textContent = `${p.name} · ${i.size}`;
+          const price = document.createElement('div');
+          price.className = 'note';
+          price.textContent = `${p.price * i.qty} lei`;
+          const qty = document.createElement('div');
+          qty.className = 'qty';
+          const mk = (label: string, text: string, d: number) => {
+            const b = document.createElement('button');
+            b.type = 'button'; b.textContent = text; b.setAttribute('aria-label', label);
+            b.addEventListener('click', () => changeQty(i.slug, i.size, d));
+            return b;
+          };
+          const n = document.createElement('span');
+          n.textContent = String(i.qty);
+          qty.append(mk('Mai puțin', '−', -1), n, mk('Mai mult', '+', 1));
+          li.append(name, price, qty);
+          list.append(li);
+        }
+        emptyMsg.hidden = items.length > 0;
+        foot.hidden = items.length === 0;
+        totalEl.textContent = `${total} lei`;
+        const msg = `Salut! Vreau să comand:\n${lines.join('\n')}\nTotal: ${total} lei`;
+        sendEl.href = `https://wa.me/${WA}?text=${encodeURIComponent(msg)}`;
+      }
+
+      function syncFavs() {
+        const favs = getFavs();
+        setCount('[data-fav-count]', favs.length);
+        document.querySelectorAll<HTMLElement>('[data-fav]').forEach((b) => {
+          const on = favs.includes(b.dataset['fav'] ?? '');
+          b.setAttribute('aria-pressed', String(on));
+        });
+      }
+
+      const refresh = () => { setCount('[data-bag-count]', cartCount()); renderBag(); syncFavs(); };
+      document.addEventListener('od:change', refresh);
+      addEventListener('storage', refresh);
+      refresh();
+
+      const open = () => { if (!bag.open) bag.showModal(); };
+      document.getElementById('bag-open')?.addEventListener('click', open);
+      document.addEventListener('od:open-bag', open);
+      document.getElementById('bag-close')?.addEventListener('click', () => bag.close());
+      document.getElementById('bag-clear')?.addEventListener('click', clearCart);
+      bag.addEventListener('click', (e) => { if (e.target === bag) bag.close(); });
+
+      document.addEventListener('click', (e) => {
+        const b = (e.target as Element).closest<HTMLElement>('[data-fav]');
+        if (b) { e.preventDefault(); toggleFav(b.dataset['fav'] ?? ''); }
+      });
+
+      const toggle = document.getElementById('search-toggle') as HTMLButtonElement;
+      const bar = document.getElementById('searchbar') as HTMLFormElement;
+      toggle.addEventListener('click', () => {
+        const show = bar.hidden;
+        bar.hidden = !show;
+        toggle.setAttribute('aria-expanded', String(show));
+        if (show) bar.querySelector('input')?.focus();
+      });
+      void addItem;
+    </script>
   </body>
 </html>

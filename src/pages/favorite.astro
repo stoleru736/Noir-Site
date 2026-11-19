@@ -1,0 +1,26 @@
+---
+import Base from '../layouts/Base.astro';
+import ProductCard from '../components/ProductCard.astro';
+import { BRAND, catalog } from '../data/site';
+---
+
+<Base title={`Favorite — ${BRAND}`} description="Modelele tale favorite.">
+  <h1>Favorite</h1>
+  <ul class="grid" id="fav-grid">
+    {catalog.map((p) => <ProductCard product={p} />)}
+  </ul>
+  <p class="empty" id="fav-empty" hidden>Nu ai încă favorite. Apasă inima de pe un model.</p>
+  <script>
+    import { getFavs } from '../scripts/cart';
+    const items = document.querySelectorAll<HTMLElement>('#fav-grid > li');
+    const empty = document.getElementById('fav-empty') as HTMLElement;
+    const apply = () => {
+      const favs = getFavs();
+      let shown = 0;
+      items.forEach((li) => { const on = favs.includes(li.dataset['slug'] ?? ''); li.hidden = !on; if (on) shown++; });
+      empty.hidden = shown > 0;
+    };
+    document.addEventListener('od:change', apply);
+    apply();
+  </script>
+</Base>

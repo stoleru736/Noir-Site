@@ -1,112 +1,296 @@
-<section class="intro" id="intro" aria-label="Introducere animată" hidden>
-  <canvas id="intro-canvas" aria-hidden="true"></canvas>
-  <div class="intro-text">
-    <p class="intro-logo">NOIR</p>
-    <button type="button" id="intro-skip" class="intro-skip">Derulează pentru a intra ↓</button>
+---
+import { BRAND, TAGLINE } from '../data/site';
+---
+
+<section class="landing" id="landing" aria-label="Introducere">
+  <div class="landing-fallback" aria-hidden="true"></div>
+  <canvas id="landing-canvas" aria-hidden="true"></canvas>
+  <div class="landing-content">
+    <h1 class="landing-logo">{BRAND}</h1>
+    <p class="landing-sub">{TAGLINE}</p>
+    <button type="button" id="enter" class="enter">ENTER THE EXPERIENCE</button>
   </div>
+  <div class="scroll-cue" aria-hidden="true"><span></span></div>
 </section>
 
+<style is:global>
+  html:has(#landing) { scroll-snap-type: y proximity; }
+  #landing, #store { scroll-snap-align: start; }
+</style>
+
 <style>
-  .intro{position:relative;width:100vw;margin-left:calc(50% - 50vw);height:calc(100svh - 64px);height:calc(100dvh - 64px);min-height:420px;background:#0b0b0b;overflow:hidden}
-  .intro[hidden]{display:none}
-  canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-  .intro-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2rem;pointer-events:none}
-  .intro-logo{margin:0;font-weight:200;letter-spacing:.6em;font-size:clamp(2rem,9vw,5rem);padding-left:.6em;mix-blend-mode:difference}
-  .intro-skip{pointer-events:auto;background:none;border:0;color:var(--mut);font:inherit;font-size:.8rem;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;position:absolute;bottom:1.5rem}
-  .intro-skip:hover,.intro-skip:focus-visible{color:var(--fg)}
+  .landing { position: relative; height: 100vh; height: 100svh; min-height: 480px; overflow: hidden; background: #0b0b0b; --p: 0; }
+  .landing-fallback { position: absolute; inset: 0; background:
+    radial-gradient(120% 40% at 20% 78%, #2a2a2c 0%, transparent 60%),
+    radial-gradient(110% 35% at 85% 92%, #333 0%, transparent 60%),
+    radial-gradient(90% 30% at 60% 60%, #1b1b1d 0%, transparent 70%),
+    linear-gradient(#0d0d0e, #161617 70%, #0b0b0b);
+    background-size: 160% 100%, 180% 100%, 150% 100%, 100% 100%; animation: drift 18s ease-in-out infinite alternate; }
+  .landing-fallback::after { content: ''; position: absolute; inset: 0; opacity: .5; background-image:
+    radial-gradient(circle, #d4af37 0 1px, transparent 1.5px), radial-gradient(circle, #f0deaa 0 1px, transparent 1.5px);
+    background-size: 90px 70px, 140px 110px; background-position: 0 0, 40px 30px; animation: sparkle 9s linear infinite; }
+  @keyframes drift { to { background-position: 40% 0, -30% 0, 25% 0, 0 0; } }
+  @keyframes sparkle { to { background-position: 90px 70px, 180px 140px; } }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity .8s; }
+  canvas.on { opacity: 1; }
+  .landing-content { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 1.25rem;
+    transform: translateY(calc(var(--p) * -60px)); opacity: calc(1 - var(--p) * 1.5); pointer-events: none; text-shadow: 0 2px 24px #000; }
+  .landing-logo { margin: 0; font-weight: 200; letter-spacing: .32em; padding-left: .32em; font-size: clamp(1.7rem, 8.5vw, 4.2rem); line-height: 1.2; }
+  .landing-sub { margin: 1rem 0 2.5rem; color: #cbbd9a; letter-spacing: .22em; font-size: clamp(.62rem, 2.6vw, .85rem); }
+  .enter { pointer-events: auto; min-height: 56px; padding: 0 2rem; font: inherit; font-size: .85rem; letter-spacing: .2em; color: #0b0b0b; cursor: pointer;
+    background: linear-gradient(135deg, #f0deaa, #d4af37 55%, #b8902a); border: 0; border-radius: 999px; box-shadow: 0 0 40px #d4af3755; text-shadow: none; touch-action: manipulation; }
+  .enter:disabled { opacity: .7; cursor: default; }
+  .enter:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+  .scroll-cue { position: absolute; left: 50%; bottom: max(1.25rem, env(safe-area-inset-bottom)); width: 22px; height: 38px; margin-left: -11px; border: 1px solid #ffffff66; border-radius: 12px; opacity: calc(1 - var(--p) * 3); }
+  .scroll-cue span { position: absolute; left: 50%; top: 7px; width: 3px; height: 8px; margin-left: -1.5px; border-radius: 2px; background: #d4af37; animation: cue 1.8s ease-in-out infinite; }
+  @keyframes cue { 0% { transform: translateY(0); opacity: 0; } 30% { opacity: 1; } 80% { transform: translateY(14px); opacity: 0; } 100% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .landing-fallback, .landing-fallback::after, .scroll-cue span { animation: none; } }
 </style>
 
 <script>
-  const intro = document.getElementById('intro') as HTMLElement;
-  const canvas = document.getElementById('intro-canvas') as HTMLCanvasElement;
-  const skip = document.getElementById('intro-skip') as HTMLButtonElement;
+  const FRAG = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+#define MAXP __MAXP__
+uniform vec2 uRes; uniform float uTime; uniform float uProg; uniform float uBurst;
+uniform vec4 uPts[MAXP];
+float gE;
+float hash(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+float noise(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
+  return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y); }
+float fbm(vec2 p){ float v=0., a=.5; for(int i=0;i<__OCT__;i++){ v+=a*noise(p); p=p*2.03+17.1; a*=.5; } return v; }
+float dunes(vec2 uv){
+  float asp=uRes.x/uRes.y;
+  vec2 p=vec2((uv.x-asp*.5)*(.55+uv.y*.9),pow(uv.y,.8));
+  vec2 q=p*vec2(1.6,4.6);
+  float w=q.y+fbm(q*.8+vec2(uTime*.02,0.))*1.8+sin(q.x*.9+uTime*.05)*.3;
+  float s=fract(w*.7);
+  float ridge=pow(s,1.7)*(1.-smoothstep(.9,1.,s)*.9);
+  return ridge*.6+noise(p*vec2(40.,110.)+vec2(uTime*.01,0.))*.012;
+}
+float touch(vec2 uv){
+  float h=0.;
+  for(int i=0;i<MAXP;i++){
+    vec4 pt=uPts[i]; float age=uTime-pt.z;
+    if(pt.z<0.||age<0.||age>5.) continue;
+    float d=distance(uv,pt.xy); float dec=exp(-age*.9);
+    if(pt.w>0.){ h-=pt.w*dec*exp(-d*d*220.)*.35; gE=max(gE,dec*exp(-d*d*70.)); }
+    else { float r=age*.32; float x=(d-r)*26.; h+=dec*exp(-x*x)*.10*cos(x*3.); gE=max(gE,dec*exp(-x*x)*.8); }
+  }
+  return h;
+}
+float height(vec2 uv){ return dunes(uv)+touch(uv); }
+void main(){
+  vec2 frag=gl_FragCoord.xy; float asp=uRes.x/uRes.y;
+  vec2 uv=frag/uRes.y;
+  vec2 c=vec2(asp*.5,.5);
+  uv-=(uv-c)*uBurst*uBurst*.6;
+  gE=0.;
+  float e=.004;
+  float h=height(uv), hx=height(uv+vec2(e,0.)), hy=height(uv+vec2(0.,e));
+  vec3 n=normalize(vec3((h-hx)/e*.2,(h-hy)/e*.2,1.));
+  float diff=clamp(dot(n,normalize(vec3(-.5,.6,.55))),0.,1.);
+  vec3 col=vec3(.035)+pow(diff,1.3)*vec3(.24,.23,.22)+h*vec3(.04,.035,.03);
+  col=mix(col,vec3(.075,.075,.08),smoothstep(.4,1.,uv.y)*.5);
+  vec3 gold=vec3(1.,.78,.32);
+  vec2 g=vec2(uv.x*140.-uTime*6.*(.5+h*2.),uv.y*140.);
+  float r=hash(floor(g));
+  float spark=step(.992,r)*smoothstep(.4,.08,length(fract(g)-.5))*(.5+.5*sin(uTime*3.+r*40.))*(.35+diff*1.2);
+  vec2 g2=vec2(uv.x*60.-uTime*9.,uv.y*60.+sin(uv.x*6.+uTime)*.6);
+  float r2=hash(floor(g2));
+  float dotp=step(.985,r2)*smoothstep(.22,.05,length(fract(g2)-.5));
+  col+=gold*(spark*.9+dotp*.8)*(1.+gE*3.);
+  col+=gold*uBurst*(1.-uBurst)*.5*(.4+diff);
+  col=mix(col,vec3(.043),uProg*.92);
+  vec2 vv=frag/uRes-.5; col*=1.-.35*dot(vv,vv);
+  gl_FragColor=vec4(col,1.);
+}`;
+  const VERT = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
 
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const ctx = canvas.getContext('2d');
+  const landing = document.getElementById('landing');
+  const canvas = document.getElementById('landing-canvas') as HTMLCanvasElement | null;
+  const enterBtn = document.getElementById('enter') as HTMLButtonElement | null;
+  if (landing && canvas && enterBtn) init(landing, canvas, enterBtn);
 
-  // Always shown. With reduced motion the sand moves slower and ignores the pointer.
-  if (ctx) {
-    intro.hidden = false;
-    run(ctx);
+  function compile(gl: WebGLRenderingContext, type: number, src: string): WebGLShader | null {
+    const s = gl.createShader(type);
+    if (!s) return null;
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+      gl.deleteShader(s);
+      return null;
+    }
+    return s;
   }
 
-  function run(c: CanvasRenderingContext2D) {
-    const mobile = innerWidth < 700;
-    const count = mobile ? 1100 : 3200;
+  function init(landing: HTMLElement, canvas: HTMLCanvasElement, enterBtn: HTMLButtonElement) {
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const coarse = matchMedia('(pointer: coarse)').matches || innerWidth < 700;
+    const MAXP = coarse ? 6 : 12;
     const dpr = Math.min(devicePixelRatio || 1, 2);
-    let w = 0, h = 0;
+    const maxScale = coarse ? 0.6 : 0.85;
+    let scale = maxScale;
+
+    const store = document.getElementById('store');
+    let entering = false;
+    let burstStart = -1;
+    let rafScroll = 0;
+
+    const gl = canvas.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'low-power' });
+    let running = !!gl;
+    const buf = new Float32Array(MAXP * 4).fill(-1);
+    let next = 0;
+    const t0 = performance.now();
+    const clock = () => ((performance.now() - t0) / 1000) * (reduced ? 0.35 : 1);
+
+    let cssW = 1, cssH = 1;
     const resize = () => {
-      w = Math.min(intro.clientWidth, 3000); h = Math.min(intro.clientHeight, 3000);
-      canvas.width = w * dpr; canvas.height = h * dpr;
-      c.setTransform(dpr, 0, 0, dpr, 0, 0);
-      c.fillStyle = '#0b0b0b'; c.fillRect(0, 0, w, h);
+      cssW = landing.clientWidth; cssH = landing.clientHeight;
+      canvas.width = Math.max(1, Math.round(cssW * dpr * scale));
+      canvas.height = Math.max(1, Math.round(cssH * dpr * scale));
+      gl?.viewport(0, 0, canvas.width, canvas.height);
     };
+
+    function addPoint(clientX: number, clientY: number, ripple: boolean) {
+      const r = landing.getBoundingClientRect();
+      const i = (next++ % MAXP) * 4;
+      buf[i] = (clientX - r.left) / cssH;
+      buf[i + 1] = 1 - (clientY - r.top) / cssH;
+      buf[i + 2] = clock();
+      buf[i + 3] = ripple ? -1 : 1;
+    }
+
+    // Touch + mouse. Listeners are passive and never block native scrolling.
+    const last = new Map<number, { x: number; y: number; sx: number; sy: number; st: number }>();
+    const onTouch = (e: TouchEvent, phase: 'start' | 'move' | 'end') => {
+      const list = phase === 'end' ? e.changedTouches : e.touches;
+      for (let k = 0; k < list.length && k < 3; k++) {
+        const t = list[k]!;
+        const s = last.get(t.identifier);
+        if (phase === 'start') {
+          last.set(t.identifier, { x: t.clientX, y: t.clientY, sx: t.clientX, sy: t.clientY, st: performance.now() });
+          addPoint(t.clientX, t.clientY, false);
+        } else if (phase === 'move' && s) {
+          if (Math.hypot(t.clientX - s.x, t.clientY - s.y) > 14) {
+            addPoint(t.clientX, t.clientY, false);
+            s.x = t.clientX; s.y = t.clientY;
+          }
+        } else if (phase === 'end' && s) {
+          const tap = Math.hypot(t.clientX - s.sx, t.clientY - s.sy) < 12 && performance.now() - s.st < 350;
+          if (tap && !(e.target as Element).closest('button')) addPoint(t.clientX, t.clientY, true);
+          last.delete(t.identifier);
+        }
+      }
+    };
+    landing.addEventListener('touchstart', (e) => onTouch(e, 'start'), { passive: true });
+    landing.addEventListener('touchmove', (e) => onTouch(e, 'move'), { passive: true });
+    landing.addEventListener('touchend', (e) => onTouch(e, 'end'), { passive: true });
+    landing.addEventListener('touchcancel', (e) => onTouch(e, 'end'), { passive: true });
+    let lm = 0;
+    landing.addEventListener('mousemove', (e) => {
+      const n = performance.now();
+      if (n - lm > 35) { lm = n; addPoint(e.clientX, e.clientY, false); }
+    });
+    landing.addEventListener('click', (e) => {
+      if (e.detail > 0 && !(e.target as Element).closest('button')) addPoint(e.clientX, e.clientY, true);
+    });
+
+    // Entering the store: button or first wheel gesture. Touch users scroll natively (CSS snap helps).
+    const ease = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+    const finish = () => {
+      cancelAnimationFrame(rafScroll);
+      entering = false; burstStart = -1; enterBtn.disabled = false; enterBtn.removeAttribute('aria-busy');
+    };
+    const enter = () => {
+      if (entering || !store) return;
+      const target = store.getBoundingClientRect().top + scrollY;
+      if (reduced) { scrollTo(0, target); return; }
+      entering = true; enterBtn.disabled = true; enterBtn.setAttribute('aria-busy', 'true');
+      burstStart = performance.now();
+      const from = scrollY, dur = 1300;
+      const html = document.documentElement;
+      html.style.scrollSnapType = 'none';
+      const step = (now: number) => {
+        const k = Math.min(1, (now - burstStart) / dur);
+        scrollTo(0, from + (target - from) * ease(k));
+        if (k < 1) rafScroll = requestAnimationFrame(step);
+        else { html.style.scrollSnapType = ''; finish(); }
+      };
+      rafScroll = requestAnimationFrame(step);
+    };
+    enterBtn.addEventListener('click', enter);
+    addEventListener('wheel', (e) => {
+      if (entering) { e.preventDefault(); return; }
+      if (e.deltaY > 8 && scrollY < 4) { e.preventDefault(); enter(); }
+    }, { passive: false });
+    const abort = () => { if (entering) { document.documentElement.style.scrollSnapType = ''; finish(); } };
+    addEventListener('touchstart', abort, { passive: true });
+    addEventListener('keydown', abort);
+
+    // Scroll-driven reveal: --p drives the content fade and the shader's fade towards the store colour.
+    let progress = 0;
+    const readProgress = () => {
+      progress = Math.min(1, Math.max(0, scrollY / (landing.offsetHeight * 0.9)));
+      landing.style.setProperty('--p', progress.toFixed(3));
+    };
+    addEventListener('scroll', readProgress, { passive: true });
+    readProgress();
+
+    if (!gl) return;
+    const vs = compile(gl, gl.VERTEX_SHADER, VERT);
+    const fs = compile(gl, gl.FRAGMENT_SHADER, FRAG.replace(/__MAXP__/g, String(MAXP)).replace(/__OCT__/g, coarse ? '3' : '4'));
+    const prog = gl.createProgram();
+    if (!vs || !fs || !prog) return;
+    gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return;
+    gl.useProgram(prog);
+    const vb = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vb);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, 'p');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    const uRes = gl.getUniformLocation(prog, 'uRes');
+    const uTime = gl.getUniformLocation(prog, 'uTime');
+    const uProg = gl.getUniformLocation(prog, 'uProg');
+    const uBurst = gl.getUniformLocation(prog, 'uBurst');
+    const uPts = gl.getUniformLocation(prog, 'uPts');
+
     resize();
-    addEventListener('resize', resize);
+    addEventListener('resize', () => { resize(); });
+    canvas.classList.add('on');
 
-    // Palette: warm sand with gold highlights.
-    const palette = ['214,204,186', '196,170,128', '212,175,55', '240,222,170', '150,130,100'];
-    const px = new Float32Array(count), py = new Float32Array(count), sz = new Float32Array(count);
-    const al = new Float32Array(count), sp = new Float32Array(count), col = new Uint8Array(count);
-    for (let i = 0; i < count; i++) {
-      px[i] = Math.random() * innerWidth; py[i] = Math.random() * innerHeight;
-      const big = Math.random() < 0.12;
-      sz[i] = big ? 1.6 + Math.random() * 1.4 : 0.5 + Math.random() * 0.9;
-      al[i] = big ? 0.8 : 0.25 + Math.random() * 0.55;
-      sp[i] = 0.7 + Math.random() * 1.6;
-      col[i] = Math.random() < 0.3 ? 2 + (Math.random() < 0.4 ? 1 : 0) : Math.floor(Math.random() * 2) + (Math.random() < 0.15 ? 3 : 0);
-    }
-
-    // Pointer (mouse or touch) pushes sand away.
-    let mx = -9999, my = -9999;
-    const move = (x: number, y: number) => { const r = intro.getBoundingClientRect(); mx = x - r.left; my = y - r.top; };
-    const off = () => { mx = -9999; };
-    if (!reduced) {
-      intro.addEventListener('mousemove', (e) => move(e.clientX, e.clientY));
-      intro.addEventListener('mouseleave', off);
-      const touch = (e: TouchEvent) => { const t0 = e.touches[0]; if (t0) move(t0.clientX, t0.clientY); };
-      intro.addEventListener('touchstart', touch, { passive: true });
-      intro.addEventListener('touchmove', touch, { passive: true });
-      intro.addEventListener('touchend', off);
-      intro.addEventListener('touchcancel', off);
-    }
-
-    let t = 0, raf = 0, visible = true, last = 0;
-    const field = (x: number, y: number) =>
-      Math.sin(x * 0.005 + t) * 1.8 + Math.cos(y * 0.007 - t * 0.8) * 1.8 +
-      Math.sin((x + y) * 0.0025 + t * 0.5) * 2.2 + Math.sin(x * 0.012 - y * 0.009 + t * 1.3) * 0.8;
+    let visible = true, raf = 0, frames = 0, acc = 0, prev = 0;
+    new IntersectionObserver(([en]) => { visible = !!en?.isIntersecting; }).observe(landing);
+    canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); running = false; canvas.classList.remove('on'); });
 
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
-      if (!visible || now - last < 16) return;
-      last = now; t += reduced ? 0.003 : 0.008;
-      c.fillStyle = 'rgba(11,11,11,0.09)';
-      c.fillRect(0, 0, w, h);
-      const R = mobile ? 90 : 140;
-      for (let i = 0; i < count; i++) {
-        let x = px[i]!, y = py[i]!;
-        const a = field(x, y);
-        const s = sp[i]! * (reduced ? 0.4 : 1);
-        x += Math.cos(a) * 1.8 * s + 0.3;
-        y += Math.sin(a) * 1.8 * s;
-        const dx = x - mx, dy = y - my, d2 = dx * dx + dy * dy;
-        if (d2 < R * R) { const d = Math.sqrt(d2) || 1, f = (1 - d / R) * 6; x += (dx / d) * f; y += (dy / d) * f; }
-        if (x > w || x < 0 || y > h || y < 0) { x = Math.random() * w; y = Math.random() * h; }
-        px[i] = x; py[i] = y;
-        c.fillStyle = `rgba(${palette[col[i]!]},${al[i]})`;
-        c.fillRect(x, y, sz[i]!, sz[i]!);
+      if (!running || !visible || document.hidden) { prev = 0; return; }
+      if (prev) {
+        acc += now - prev; frames++;
+        if (frames === 45) {
+          const avg = acc / frames;
+          if (avg > 24 && scale > 0.35) { scale *= 0.8; resize(); }
+          else if (avg < 13 && scale < maxScale) { scale = Math.min(maxScale, scale * 1.1); resize(); }
+          frames = 0; acc = 0;
+        }
       }
+      prev = now;
+      const burst = burstStart < 0 ? 0 : Math.min(1, (now - burstStart) / 1300);
+      gl.uniform2f(uRes, canvas.width, canvas.height);
+      gl.uniform1f(uTime, clock());
+      gl.uniform1f(uProg, progress);
+      gl.uniform1f(uBurst, ease(burst));
+      gl.uniform4fv(uPts, buf);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
     };
-
-    new IntersectionObserver(([e]) => { visible = !!e?.isIntersecting; }).observe(intro);
-    document.addEventListener('visibilitychange', () => {
-      cancelAnimationFrame(raf);
-      if (!document.hidden) raf = requestAnimationFrame(frame);
-    });
     raf = requestAnimationFrame(frame);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) prev = 0; });
+    void raf;
   }
-
-  skip.addEventListener('click', () => {
-    document.getElementById('main-content')?.scrollIntoView({ behavior: 'smooth' });
-  });
 </script>

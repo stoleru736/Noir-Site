@@ -2,21 +2,38 @@
 import Base from '../layouts/Base.astro';
 import Intro from '../components/Intro.astro';
 import ProductCard from '../components/ProductCard.astro';
-import { catalog } from '../data/site';
+import Shoe from '../components/Shoe.astro';
+import { BRAND, TAGLINE, catalog, categoryLabels } from '../data/site';
+
+const featured = catalog[0]!;
+const categories = [...new Set(catalog.map((p) => p.category))];
 ---
 
-<Base title="NOIR — Sneakers" description="NOIR: sneakers într-o estetică închisă, minimală. Comandă simplu pe WhatsApp.">
-  <Intro />
-  <div id="main-content"></div>
-  <section class="hero">
-    <h1>Sneakers.<br />Fără zgomot.</h1>
-    <p>Colecția NOIR: siluete curate, culori sobre. Alegi modelul, ne scrii pe WhatsApp, iar noi ne ocupăm de restul.</p>
-    <p><a class="btn" href="/catalog/">Vezi catalogul</a></p>
+<Base title={`${BRAND} — Sneakers`} description={`${BRAND}: ${TAGLINE.toLowerCase()} Sneakers într-o estetică închisă, minimală. Comandă simplu pe WhatsApp.`}>
+  <Intro slot="landing" />
+  <section class="editorial" aria-label="Model recomandat">
+    <a href={`/catalog/${featured.slug}/`} class="editorial-card">
+      <Shoe hex={featured.hex} label={featured.name} />
+      <div class="editorial-text">
+        <p class="note">Model recomandat</p>
+        <h2>{featured.name}</h2>
+        <p class="bigprice">{featured.price} lei</p>
+        <span class="btn solid">Vezi modelul</span>
+      </div>
+    </a>
   </section>
-  <section aria-labelledby="noutati">
-    <h2 id="noutati">Noutăți</h2>
+  {categories.map((c) => (
+    <section class="rail" aria-label={categoryLabels[c] ?? c}>
+      <h2>{categoryLabels[c] ?? c}</h2>
+      <ul class="rail-list">
+        {catalog.filter((p) => p.category === c).map((p) => <ProductCard product={p} />)}
+      </ul>
+    </section>
+  ))}
+  <section aria-labelledby="toate">
+    <h2 id="toate">Toate modelele</h2>
     <ul class="grid">
-      {catalog.slice(0, 4).map((p) => <ProductCard product={p} />)}
+      {catalog.map((p) => <ProductCard product={p} />)}
     </ul>
   </section>
 </Base>

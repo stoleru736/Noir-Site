@@ -1,9 +1,9 @@
 ---
 import Base from '../layouts/Base.astro';
-import { WHATSAPP_DISPLAY } from '../data/site';
+import { BRAND, WHATSAPP_DISPLAY } from '../data/site';
 ---
 
-<Base title="Garanție și livrare — NOIR" description="Condiții de retur, livrare și pre-order NOIR.">
+<Base title={`Garanție și livrare — ${BRAND}`} description={`Condiții de retur, livrare și pre-order ${BRAND}.`}>
   <div class="prose">
     <h1>Garanție și livrare</h1>
     <h2>Livrare</h2>

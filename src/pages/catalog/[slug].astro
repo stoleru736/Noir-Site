@@ -1,7 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Shoe from '../../components/Shoe.astro';
-import { catalog, genderLabels, stockLabels, whatsappLink } from '../../data/site';
+import { BRAND, catalog, genderLabels, stockLabels, whatsappLink } from '../../data/site';
 
 export function getStaticPaths() {
   return catalog.map((product) => ({ params: { slug: product.slug }, props: { product } }));
@@ -15,7 +15,7 @@ const jsonLd = {
   name: p.name,
   description: p.description,
   color: p.colorLabel,
-  brand: { '@type': 'Brand', name: 'NOIR' },
+  brand: { '@type': 'Brand', name: BRAND },
   offers: {
     '@type': 'Offer',
     priceCurrency: 'RON',
@@ -26,7 +26,7 @@ const jsonLd = {
 const orderBase = `Salut! Vreau să comand ${p.name} (${p.colorLabel}), mărimea `;
 ---
 
-<Base title={`${p.name} — NOIR`} description={p.description} jsonLd={jsonLd}>
+<Base title={`${p.name} — ${BRAND}`} description={p.description} jsonLd={jsonLd}>
   <article class="product">
     <div class="gallery">
       {views.map((v) => (
@@ -51,13 +51,18 @@ const orderBase = `Salut! Vreau să comand ${p.name} (${p.colorLabel}), mărimea
           <label><input type="radio" name="size" value={s} checked={i === 0} />{s}</label>
         ))}
       </fieldset>
-      <a class="btn solid" id="order" href={whatsappLink(orderBase + p.sizes[0])} data-base={orderBase} data-phone="40750437127">Comandă pe WhatsApp</a>
+      <div class="buybar">
+        <strong class="bigprice">{p.price} lei</strong>
+        <button type="button" class="btn solid" id="add-bag">Adaugă în coș</button>
+      </div>
+      <a class="btn" id="order" href={whatsappLink(orderBase + p.sizes[0])} data-base={orderBase} data-phone="40750437127">Comandă direct pe WhatsApp</a>
       <p class="note">{p.stock === 'stock'
         ? 'Livrare 1–2 zile, plată ramburs.'
         : 'Pre-order: livrare 9–21 zile, avans 10%.'} <a href="/garantie/">Detalii garanție</a></p>
     </div>
   </article>
   <script>
+    import { addItem } from '../../scripts/cart';
     const views = document.querySelectorAll<HTMLElement>('[data-view]');
     const thumbs = document.querySelectorAll<HTMLElement>('[data-thumb]');
     thumbs.forEach((t) =>
@@ -66,6 +71,16 @@ const orderBase = `Salut! Vreau să comand ${p.name} (${p.colorLabel}), mărimea
         thumbs.forEach((o) => o.setAttribute('aria-current', String(o === t)));
       }),
     );
+    const slug = location.pathname.split('/').filter(Boolean).pop() ?? '';
+    const addBtn = document.getElementById('add-bag') as HTMLButtonElement;
+    addBtn.addEventListener('click', () => {
+      const sel = document.querySelector<HTMLInputElement>('input[name=size]:checked');
+      if (!sel) return;
+      addItem(slug, Number(sel.value));
+      addBtn.textContent = 'Adăugat ✓';
+      setTimeout(() => { addBtn.textContent = 'Adaugă în coș'; }, 1500);
+      document.dispatchEvent(new CustomEvent('od:open-bag'));
+    });
     const order = document.getElementById('order') as HTMLAnchorElement;
     document.querySelectorAll<HTMLInputElement>('input[name=size]').forEach((r) =>
       r.addEventListener('change', () => {

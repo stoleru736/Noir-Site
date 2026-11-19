@@ -44,3 +44,60 @@ select{background:var(--bg);color:var(--fg);border:1px solid var(--line);padding
 .prose li{margin:.4rem 0}
 .note{color:var(--mut);font-size:.9rem}
 .skip{position:absolute;left:-999px}.skip:focus{left:1rem;top:1rem;background:var(--bg);padding:.5rem;z-index:9}
+
+/* --- Mobile-first store (OBSIDIAN DUNES) --- */
+body{overflow-x:clip}
+header.site{position:sticky;top:0;z-index:20;background:rgba(11,11,11,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+header.site .bar{height:56px}
+.logo{font-size:.8rem;letter-spacing:.3em;white-space:nowrap}
+.icons{display:flex;align-items:center;gap:.1rem}
+.icons .textlink{display:none;margin-right:1rem}
+.icon{position:relative;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;background:none;border:0;color:var(--fg);cursor:pointer;font:inherit}
+.icon:focus-visible,.fav:focus-visible,.linkbtn:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.count{position:absolute;top:4px;right:2px;min-width:18px;height:18px;border-radius:9px;background:var(--acc);color:#0b0b0b;font-size:.7rem;line-height:18px;text-align:center;font-weight:600}
+.searchbar{display:flex;gap:.5rem;padding-bottom:.75rem}
+header.site .searchbar[hidden]{display:none}
+.searchbar input{flex:1;min-width:0;background:var(--bg);color:var(--fg);border:1px solid var(--line);padding:.7rem .9rem;font-size:1rem}
+.editorial{padding-top:1.5rem}
+.editorial-card{display:grid;gap:1rem;text-decoration:none}
+.editorial-card svg{width:100%;height:auto;aspect-ratio:1;display:block}
+.editorial h2,.rail h2,main h2{font-size:1.35rem;margin:1.5rem 0 .75rem}
+.bigprice{font-size:1.5rem;font-weight:500;margin:.25rem 0 1rem}
+.rail-list{display:flex;gap:1rem;overflow-x:auto;scroll-snap-type:x mandatory;list-style:none;margin:0 -1rem;padding:0 1rem .5rem;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.rail-list::-webkit-scrollbar{display:none}
+.rail-list>li{flex:0 0 68%;max-width:260px;scroll-snap-align:start}
+li{position:relative}
+.fav{position:absolute;top:.25rem;right:.25rem;width:44px;height:44px;background:none;border:0;color:var(--fg);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.fav svg{fill:none}
+.fav[aria-pressed=true] svg{fill:var(--acc);stroke:var(--acc)}
+.card h3{font-size:1.05rem}
+.card .price{font-size:1.1rem;color:var(--fg);font-weight:500}
+li[hidden]{display:none}
+.sizes{gap:.6rem}
+.sizes label{min-width:52px;min-height:48px;display:inline-flex;align-items:center;justify-content:center;font-size:1.05rem}
+.buybar{position:sticky;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.75rem 0 calc(.75rem + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line);margin:1rem 0;z-index:5}
+.buybar .bigprice{margin:0}
+.buybar .btn{flex:1;text-align:center;min-height:52px}
+.wide{display:block;text-align:center;width:100%}
+.linkbtn{background:none;border:0;color:var(--mut);text-decoration:underline;font:inherit;padding:.75rem 0;cursor:pointer}
+dialog#bag{margin:auto 0 0;width:100%;max-width:520px;max-height:85vh;overflow:auto;background:#121212;color:var(--fg);border:1px solid var(--line);border-radius:16px 16px 0 0;padding:1rem 1.25rem calc(1rem + env(safe-area-inset-bottom))}
+dialog#bag::backdrop{background:rgba(0,0,0,.7)}
+.bag-head{display:flex;justify-content:space-between;align-items:center}
+.bag-head h2{margin:0;font-size:1.2rem}
+.bag-list{list-style:none;padding:0;margin:0}
+.bag-list li{display:grid;grid-template-columns:1fr auto;gap:.25rem 1rem;padding:.75rem 0;border-bottom:1px solid var(--line)}
+.bag-name{font-size:1.05rem}
+.qty{grid-row:1/3;grid-column:2;display:flex;align-items:center;gap:.5rem}
+.qty button{width:40px;height:40px;background:none;border:1px solid var(--line);color:var(--fg);font-size:1.2rem;cursor:pointer}
+.bag-total{font-size:1.2rem;margin:1rem 0 .5rem}
+footer p{margin:.25rem 0}
+@media(min-width:800px){
+  .logo{font-size:1rem}
+  .icons .textlink{display:inline}
+  .rail-list{margin:0;padding-left:0;padding-right:0;flex-wrap:nowrap}
+  .rail-list>li{flex-basis:260px}
+  .editorial-card{grid-template-columns:1.2fr 1fr;align-items:center;gap:3rem}
+  dialog#bag{margin:auto;border-radius:16px}
+  .buybar{position:static;border:0;padding:0;margin:1rem 0 .5rem}
+  .buybar .btn{flex:0 0 auto;min-width:240px}
+}

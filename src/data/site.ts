@@ -1,5 +1,7 @@
 import products from './products.json';
 
+export const BRAND = 'OBSIDIAN DUNES';
+export const TAGLINE = 'WHERE MOVEMENT MEETS IDENTITY.';
 export const WHATSAPP = '40750437127';
 export const WHATSAPP_DISPLAY = '+40 750 437 127';
 
@@ -30,6 +32,11 @@ export const genderLabels: Record<Gender, string> = {
 export const stockLabels: Record<Stock, string> = {
   stock: 'Pe stoc 24h',
   preorder: 'Pre-order',
+};
+export const categoryLabels: Record<string, string> = {
+  low: 'Low-top',
+  high: 'High-top',
+  chunky: 'Chunky',
 };
 
 export function whatsappLink(text: string): string {

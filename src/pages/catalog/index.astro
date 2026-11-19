@@ -1,13 +1,13 @@
 ---
 import Base from '../../layouts/Base.astro';
 import ProductCard from '../../components/ProductCard.astro';
-import { catalog, genderLabels } from '../../data/site';
+import { BRAND, catalog, genderLabels } from '../../data/site';
 
 const unique = (key: 'category' | 'color') => [...new Set(catalog.map((p) => p[key]))];
 const colors = [...new Map(catalog.map((p) => [p.color, p.colorLabel])).entries()];
 ---
 
-<Base title="Catalog — NOIR" description="Catalogul NOIR: filtrează după gen, categorie și culoare.">
+<Base title={`Catalog — ${BRAND}`} description={`Catalogul ${BRAND}: filtrează după gen, categorie și culoare.`}>
   <h1>Catalog</h1>
   <form class="filters" id="filters">
     <label>Gen
@@ -38,6 +38,7 @@ const colors = [...new Map(catalog.map((p) => [p.color, p.colorLabel])).entries(
     const items = document.querySelectorAll<HTMLElement>('#grid > li');
     const empty = document.getElementById('empty') as HTMLElement;
     const keys = ['gender', 'category', 'color'] as const;
+    const q = (new URLSearchParams(location.search).get('q') ?? '').trim().toLowerCase();
     const apply = () => {
       const data = new FormData(form);
       let shown = 0;
@@ -46,8 +47,9 @@ const colors = [...new Map(catalog.map((p) => [p.color, p.colorLabel])).entries(
           const v = data.get(k);
           return !v || li.dataset[k] === v;
         });
-        li.hidden = !ok;
-        if (ok) shown++;
+        const match = ok && (!q || (li.dataset['name'] ?? '').includes(q));
+        li.hidden = !match;
+        if (match) shown++;
       });
       empty.hidden = shown > 0;
     };
