@@ -116,7 +116,7 @@ h1,h2,.logo{font-family:"Archivo",system-ui,sans-serif;font-weight:800;font-stre
 .btn.solid:hover,.btn.solid:focus-visible{background:#FAFBFA;border-color:#FAFBFA;color:#0B0E14}
 .badge{border-radius:0;font-size:.62rem;letter-spacing:.14em}
 select,.searchbar input,.sizes label,.qty button,.thumbs button,dialog#bag{border-radius:0}
-svg[role=img]>rect:first-child{fill-opacity:.6}
+
 /* scan lines + drifting orange band behind everything (one static fixed layer + one compositor-animated layer) */
 body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background:repeating-linear-gradient(180deg,rgba(255,255,255,.06) 0 1px,transparent 1px 5px)}
 body::after{content:'';position:fixed;top:0;bottom:0;left:0;width:60vw;z-index:-1;pointer-events:none;background:linear-gradient(90deg,rgba(255,77,0,0),rgba(255,77,0,.24) 55%,rgba(255,77,0,0));transform:translate3d(-100%,0,0);animation:noir-drift 28s linear infinite;will-change:transform}
@@ -131,10 +131,18 @@ html[lang='en'] .lg.en,html[lang='ro'] .lg.ro{opacity:1;color:var(--acc)}
 #add-bag .ok{display:none}
 #add-bag[data-done] .t{display:none}
 #add-bag[data-done] .ok{display:inline}
-/* ENTER arrival: shutters open */
-.warp-in{position:fixed;inset:0;z-index:70;pointer-events:none;display:none}
+/* Arrival (after ENTER, and every product open): NOIR flash, orange band sweep, shutters open. transform/opacity only. */
+.warp-in{position:fixed;inset:0;z-index:70;pointer-events:none;display:none;overflow:hidden}
 .entering .warp-in{display:block}
-.warp-in i{position:absolute;left:0;right:0;top:calc(var(--i)*12.5%);height:calc(12.5% + 1px);background:#0B0E14;border-bottom:1px solid rgba(255,77,0,.45);transform-origin:100% 50%;animation:noir-unshut .7s var(--e) calc(var(--i)*40ms) both}
+.entered .warp-in{display:none}
+.warp-in i{position:absolute;left:0;right:0;top:calc(var(--i)*12.5%);height:calc(12.5% + 1px);background:#0B0E14;border-bottom:1px solid rgba(255,77,0,.5);transform-origin:100% 50%;will-change:transform;animation:noir-unshut .5s var(--e) calc(.16s + var(--i)*30ms) both}
 .warp-in i:nth-child(even){transform-origin:0 50%}
+.wi-band{position:absolute;top:0;bottom:0;left:0;width:55%;background:linear-gradient(90deg,rgba(255,77,0,0),rgba(255,77,0,.85) 55%,rgba(255,77,0,0));transform:translate3d(-110%,0,0);will-change:transform;animation:noir-sweep .7s cubic-bezier(.65,0,.35,1) .08s both}
+.wi-mark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:"Archivo",sans-serif;font-weight:900;font-size:min(33vw,22rem);line-height:1;font-stretch:63%;letter-spacing:-.02em;color:#FAFBFA;text-transform:uppercase;will-change:transform,opacity;animation:noir-flash .5s ease both}
 @keyframes noir-unshut{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@keyframes noir-sweep{from{transform:translate3d(-110%,0,0)}to{transform:translate3d(200%,0,0)}}
+@keyframes noir-flash{0%{opacity:0;transform:scale(.9)}35%{opacity:1;transform:scale(1)}70%{opacity:1}100%{opacity:0;transform:scale(1.05)}}
+/* Cross-document view transition: keep the old page until the new one is ready, no extra fade of its own. */
+@view-transition{navigation:auto}
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
 @media(prefers-reduced-motion:reduce){body::after{animation:none;transform:translate3d(20vw,0,0)}.warp-in{display:none!important}html{scroll-behavior:auto}}

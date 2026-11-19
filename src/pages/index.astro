@@ -50,6 +50,7 @@ const strips = [0, 1, 2, 3, 4, 5, 6, 7];
     <meta property="og:locale" content="en_US" />
     <meta property="og:url" content={canonical} />
     <link rel="preload" href="/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/mono-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="prefetch" href="/magazin/" />
     <script is:inline>
       document.documentElement.classList.add('js');
@@ -61,11 +62,12 @@ const strips = [0, 1, 2, 3, 4, 5, 6, 7];
       <!-- HERO: pinned poster -->
       <section class="stage hero" data-stage="hero" aria-label="Intro">
         <div class="pin ink">
+          <div class="bloom" aria-hidden="true"></div>
           <canvas id="scan" aria-hidden="true"></canvas>
           <button type="button" class="langbtn mono" data-lang-toggle data-a="aria-label" data-a-en="Switch language to Romanian" data-a-ro="Schimbă limba în engleză" aria-label="Switch language to Romanian">
             <span class="lg en">EN</span><span class="sep">/</span><span class="lg ro">RO</span>
           </button>
-          <h1 class="poster mark" style="--chars:4" data-mark><span data-rev>{BRAND}</span></h1>
+          <h1 class="poster mark" style="--chars:4" data-mark>{BRAND}</h1>
           <p class="claim poster" data-claim>
             {TAGLINE.split(' ').map((w, i) => (<><span class="w" style={`--d:${i * 40}ms`}>{w}</span>{' '}</>))}
           </p>
@@ -250,7 +252,11 @@ const strips = [0, 1, 2, 3, 4, 5, 6, 7];
   [data-rev].corner.tr.in { opacity: 0.42; }
 
   /* Hero */
-  #scan { position: absolute; inset: 0; width: 100%; height: 100%; display: block; background: linear-gradient(180deg, #0B0E14, #07090D); }
+  .hero .pin { background: linear-gradient(180deg, #0B0E14, #07090D); }
+  #scan { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .bloom { position: absolute; top: 0; bottom: 0; left: 0; width: 60%; background: linear-gradient(90deg, rgba(255, 77, 0, 0), rgba(255, 77, 0, 0.32) 50%, rgba(255, 77, 0, 0));
+    transform: translate3d(-100%, 0, 0); will-change: transform; animation: bloom 26s linear infinite; }
+  @keyframes bloom { to { transform: translate3d(170%, 0, 0); } }
   .mark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--white);
     font-size: min(clamp(4rem, 33vw, 40rem), calc(94vw / (var(--chars) * 0.56)));
     will-change: transform, opacity; pointer-events: none; }
@@ -367,5 +373,6 @@ const strips = [0, 1, 2, 3, 4, 5, 6, 7];
     .js [data-rev], .js .w { opacity: 1; transform: none; transition: none; }
     .row, .plus::before, .plus::after { transition: none; }
     .warp { display: none; }
+    .bloom { animation: none; transform: translate3d(10%, 0, 0); }
   }
 </style>

@@ -27,7 +27,7 @@ const jsonLd = {
 const orderBase = `Salut! Vreau să comand ${p.name} (${p.colorLabel}), mărimea `;
 ---
 
-<Base title={`${p.name} — ${BRAND}`} description={descriptionEn(p)} jsonLd={jsonLd}>
+<Base title={`${p.name} — ${BRAND}`} description={descriptionEn(p)} jsonLd={jsonLd} arrive>
   <article class="product">
     <div class="gallery">
       {views.map((v) => (
