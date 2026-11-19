@@ -1,7 +1,7 @@
 :root{--bg:#0b0b0b;--fg:#ece8e1;--mut:#8d8982;--line:#242424;--acc:#c9b99a;--max:1200px}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+body{margin:0;overflow-x:clip;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
 a{color:inherit}
 .wrap{max-width:var(--max);margin:0 auto;padding:0 1rem}
 header.site{border-bottom:1px solid var(--line)}
