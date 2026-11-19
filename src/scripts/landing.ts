@@ -54,11 +54,11 @@ void main(){
   float occ=clamp((hs-h)*9.-.04,0.,1.);
   float lit=diff*(1.-.75*occ);
   vec3 sun=vec3(1.,.9,.76);
-  vec3 col=vec3(.14,.13,.12)*(sun*lit*2.3+vec3(.11,.115,.13));
+  vec3 col=vec3(.21,.195,.18)*(sun*lit*3.1+vec3(.2,.205,.22));
   float fog=1.-exp(-z*.09);
-  vec3 hzc=vec3(.075,.064,.052);
+  vec3 hzc=vec3(.14,.12,.1);
   col=mix(col,hzc,fog*.85);
-  vec3 sky=mix(vec3(.016,.016,.018),hzc*1.05,exp(dy*10.)*.85);
+  vec3 sky=mix(vec3(.03,.03,.034),hzc*1.05,exp(dy*10.)*.85);
   col=mix(sky,col,smoothstep(-.004,.004,dy));
   float crest=smoothstep(.4,.85,h)*(1.-occ)*step(0.,dy);
   gl_FragColor=vec4(col,crest);
@@ -87,16 +87,23 @@ void main(){
   gl_FragColor=vec4(col,1.);
 }`;
 
-// Gold sand: positions are computed on the GPU from time, nothing is uploaded per frame except a few uniforms.
+// Gold sand: each grain wanders on its own random path (sum of sines with per-grain phase/frequency) and drags a short
+// tail. Everything is computed on the GPU from time; each grain is a 2-vertex line (head, tail) plus a point for the head.
 const PVERT = `
-attribute vec3 a;
+attribute vec4 a;
 uniform float uTime; uniform float uBurst; uniform float uPx; uniform float uAsp; uniform vec3 uTouch[3];
 varying float vA;
+float h(float n){ return fract(sin(n*127.1)*43758.5453); }
+vec2 place(vec3 s,float t){
+  float r1=h(s.x*91.7+s.y*13.3), r2=h(s.y*57.1+s.z*31.7), r3=h(s.z*17.9+s.x*71.3), r4=h(s.x*33.1+s.z*5.7);
+  vec2 home=vec2(s.x,.03+s.y*.68);
+  float f1=.4+r1*1.3, f2=.35+r2*1.4, A=.03+.09*r3;
+  vec2 w=vec2(sin(t*f1+r4*6.283)+.5*sin(t*f1*2.3+r1*12.),cos(t*f2+r1*6.283)+.5*cos(t*f2*1.9+r2*12.))*A;
+  w.x/=uAsp;
+  return home+w;
+}
 void main(){
-  float sp=.035+.13*a.z;
-  float x=fract(a.x+uTime*sp);
-  float y=.03+a.y*.66+sin(uTime*.8+a.x*40.)*.012*(.3+a.z);
-  vec2 p=vec2(x,y);
+  vec2 p=place(a.xyz,uTime-a.w*.07);
   for(int i=0;i<3;i++){
     vec3 t=uTouch[i];
     vec2 d=vec2((p.x-t.x)*uAsp,p.y-t.y);
@@ -105,15 +112,21 @@ void main(){
   }
   p+=(p-vec2(.5,.4))*uBurst*uBurst*1.4;
   gl_Position=vec4(p*2.-1.,0.,1.);
-  gl_PointSize=uPx*(1.3+2.8*a.z*a.z);
-  float edge=smoothstep(0.,.04,x)*smoothstep(1.,.96,x);
-  vA=(.3+.7*a.z)*(.55+.45*sin(uTime*(2.+a.z*3.)+a.x*90.))*edge*(1.-smoothstep(.6,1.,uBurst));
+  gl_PointSize=a.w>.5?0.:uPx*(1.3+2.8*a.z*a.z);
+  float edge=smoothstep(-.02,.03,p.x)*smoothstep(1.02,.97,p.x);
+  vA=(.3+.7*a.z)*(.55+.45*sin(uTime*(2.+a.z*3.)+a.x*90.))*edge*(1.-a.w)*(1.-smoothstep(.6,1.,uBurst));
 }`;
 const PFRAG = PRE + `
 varying float vA;
 void main(){
   float d=length(gl_PointCoord-.5)*2.;
   float a=smoothstep(1.,.15,d)*vA;
+  gl_FragColor=vec4(vec3(1.,.8,.45)*a,a);
+}`;
+const LFRAG = PRE + `
+varying float vA;
+void main(){
+  float a=vA*.6;
   gl_FragColor=vec4(vec3(1.,.8,.45)*a,a);
 }`;
 
@@ -159,16 +172,19 @@ export function initLanding(landing: HTMLElement, canvas: HTMLCanvasElement, ent
 
   const gl = canvas.getContext('webgl', { antialias: false, alpha: false, depth: false, stencil: false, powerPreference: 'high-performance' });
   if (!gl) return;
-  const hP = program(gl, VERT, HEIGHT), sP = program(gl, VERT, SCENE), cP = program(gl, VERT, COMPOSITE), pP = program(gl, PVERT, PFRAG);
-  if (!hP || !sP || !cP || !pP) return;
-  const heightProg: WebGLProgram = hP, sceneProg: WebGLProgram = sP, compProg: WebGLProgram = cP, partProg: WebGLProgram = pP;
+  const hP = program(gl, VERT, HEIGHT), sP = program(gl, VERT, SCENE), cP = program(gl, VERT, COMPOSITE), pP = program(gl, PVERT, PFRAG), lP = program(gl, PVERT, LFRAG);
+  if (!hP || !sP || !cP || !pP || !lP) return;
+  const heightProg: WebGLProgram = hP, sceneProg: WebGLProgram = sP, compProg: WebGLProgram = cP, partProg: WebGLProgram = pP, lineProg: WebGLProgram = lP;
 
   const quad = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, quad);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
 
-  const seeds = new Float32Array(maxParticles * 3);
-  for (let i = 0; i < seeds.length; i++) seeds[i] = Math.random();
+  const seeds = new Float32Array(maxParticles * 2 * 4);
+  for (let i = 0; i < maxParticles; i++) {
+    const x = Math.random(), y = Math.random(), z = Math.random();
+    seeds.set([x, y, z, 0, x, y, z, 1], i * 8);
+  }
   const pBuf = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, pBuf);
   gl.bufferData(gl.ARRAY_BUFFER, seeds, gl.STATIC_DRAW);
@@ -188,8 +204,10 @@ export function initLanding(landing: HTMLElement, canvas: HTMLCanvasElement, ent
 
   const uc = (n: string) => gl.getUniformLocation(cP, n);
   const up = (n: string) => gl.getUniformLocation(pP, n);
+  const ul = (n: string) => gl.getUniformLocation(lP, n);
   const cTexel = uc('uTexel'), cTime = uc('uTime'), cBurst = uc('uBurst');
   const pTime = up('uTime'), pBurst = up('uBurst'), pPx = up('uPx'), pAsp = up('uAsp'), pTouch = up('uTouch[0]');
+  const lTime = ul('uTime'), lBurst = ul('uBurst'), lPx = ul('uPx'), lAsp = ul('uAsp'), lTouch = ul('uTouch[0]');
   gl.useProgram(cP);
   gl.uniform1i(uc('uScene'), 0); gl.uniform1i(uc('uDisp'), 1); gl.uniform1i(uc('uStreak'), 2);
 
@@ -427,15 +445,15 @@ export function initLanding(landing: HTMLElement, canvas: HTMLCanvasElement, ent
     packTouches(now);
     g.enable(g.BLEND);
     g.blendFunc(g.ONE, g.ONE);
-    g.useProgram(partProg);
     g.bindBuffer(g.ARRAY_BUFFER, pBuf);
-    g.vertexAttribPointer(0, 3, g.FLOAT, false, 0, 0);
-    g.uniform1f(pTime, t);
-    g.uniform1f(pBurst, eased);
-    g.uniform1f(pPx, Math.max(1, (bufW / cssW)) * (coarse ? 1.3 : 1.1));
-    g.uniform1f(pAsp, cssW / cssH);
-    g.uniform3fv(pTouch, touchU);
-    g.drawArrays(g.POINTS, 0, particles);
+    g.vertexAttribPointer(0, 4, g.FLOAT, false, 0, 0);
+    const px = Math.max(1, bufW / cssW) * (coarse ? 1.3 : 1.1), asp = cssW / cssH;
+    g.useProgram(lineProg);
+    g.uniform1f(lTime, t); g.uniform1f(lBurst, eased); g.uniform1f(lPx, px); g.uniform1f(lAsp, asp); g.uniform3fv(lTouch, touchU);
+    g.drawArrays(g.LINES, 0, particles * 2);
+    g.useProgram(partProg);
+    g.uniform1f(pTime, t); g.uniform1f(pBurst, eased); g.uniform1f(pPx, px); g.uniform1f(pAsp, asp); g.uniform3fv(pTouch, touchU);
+    g.drawArrays(g.POINTS, 0, particles * 2);
 
     if (!firstDrawn) { firstDrawn = true; landing.classList.add('gl'); canvas.classList.add('on'); }
   };
