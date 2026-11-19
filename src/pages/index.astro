@@ -1,22 +1,371 @@
 ---
-import Base from '../layouts/Base.astro';
-import Intro from '../components/Intro.astro';
-import ProductCard from '../components/ProductCard.astro';
-import { catalog } from '../data/site';
+import '../styles/fonts.css';
+import L from '../components/L.astro';
+import Words from '../components/Words.astro';
+import { BRAND, TAGLINE, WHATSAPP_DISPLAY, WHATSAPP, catalog, stockLabels, stockLabelsEn, categoryLabels, genderLabels, genderLabelsEn, colorEn } from '../data/site';
+
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const description = `${BRAND}: ${TAGLINE.toLowerCase()} Dark, minimal sneakers. Order simply on WhatsApp.`;
+
+const rev = (i: number, step = 60) => `--d:${i * step}ms`;
+const money = (n: number) => `${n} LEI`;
+
+const ladder = [
+  { n: '001', en: ['Pick a model', 'Browse the NOIR collection and choose the colour that suits you.'], ro: ['Alegi modelul', 'Răsfoiești colecția NOIR și alegi culoarea care ți se potrivește.'] },
+  { n: '002', en: ['Pick a size', 'Choose your size on the product page, then add it to the bag.'], ro: ['Alegi mărimea', 'Mărimea o alegi direct pe pagina produsului, apoi adaugi în coș.'] },
+  { n: '003', en: ['Send on WhatsApp', `Your bag goes out in one message to ${WHATSAPP_DISPLAY}. No online payment.`], ro: ['Trimiți pe WhatsApp', `Coșul pleacă într-un singur mesaj către ${WHATSAPP_DISPLAY}. Fără plată online.`] },
+  { n: '004', en: ['Get your parcel', 'In stock 24h: delivery in 1–2 days, pay on delivery. Pre-order: 9–21 days.'], ro: ['Primești coletul', 'Pe stoc 24h: livrare în 1–2 zile, plata ramburs. Pre-order: 9–21 zile.'] },
+];
+
+const cells = [
+  { en: ['In stock 24h', 'Models marked “In stock 24h” ship fast. Delivery in 1–2 days, pay on delivery.'], ro: ['Pe stoc 24h', 'Modelele marcate „Pe stoc 24h” pleacă rapid. Livrare în 1–2 zile, plata ramburs la curier.'] },
+  { en: ['Pre-order', 'Pre-order models arrive in 9–21 days. A 10% advance is paid at order.'], ro: ['Pre-order', 'Modelele pe comandă ajung în 9–21 de zile. Se achită un avans de 10% la comandă.'] },
+  { en: ['Returns and warranty', 'Returns are accepted for defective items or a different model/size than ordered.'], ro: ['Retur și garanție', 'Returul se acceptă pentru produse cu defecte sau model/mărime diferită față de comandă.'] },
+];
+
+const plates = catalog.slice(0, 4);
+
+const faq = [
+  { en: ['How do I order?', `Add models to the bag and send the order on WhatsApp at ${WHATSAPP_DISPLAY}. There is no online payment on the site.`], ro: ['Cum comand?', `Adaugi modelele în coș și trimiți comanda pe WhatsApp la ${WHATSAPP_DISPLAY}. Nu există plată online pe site.`] },
+  { en: ['How do delivery and payment work?', 'In stock 24h: delivery in 1–2 days, pay on delivery to the courier.'], ro: ['Cum se face livrarea și plata?', 'Pe stoc 24h: livrare în 1–2 zile, plata ramburs la curier.'] },
+  { en: ['How does pre-order work?', 'Delivery takes 9–21 days, with a 10% advance at order.'], ro: ['Cum funcționează pre-order?', 'Livrarea durează 9–21 de zile, cu avans de 10% la comandă.'] },
+  { en: ['Can I return my order?', `Only for defective items or a different model/size than ordered. Write to us on WhatsApp at ${WHATSAPP_DISPLAY}, with photos.`], ro: ['Pot returna comanda?', `Doar pentru produse cu defecte sau pentru un model/mărime diferită față de comandă. Scrie-ne pe WhatsApp la ${WHATSAPP_DISPLAY}, cu poze.`] },
+  { en: ['I have a discount code.', 'Tell us the 5% code in your order message.'], ro: ['Am un cod de reducere.', 'Spune-ne codul de 5% în mesajul de comandă.'] },
+];
+const strips = [0, 1, 2, 3, 4, 5, 6, 7];
 ---
 
-<Base title="NOIR — Sneakers" description="NOIR: sneakers într-o estetică închisă, minimală. Comandă simplu pe WhatsApp.">
-  <Intro />
-  <div id="main-content"></div>
-  <section class="hero">
-    <h1>Sneakers.<br />Fără zgomot.</h1>
-    <p>Colecția NOIR: siluete curate, culori sobre. Alegi modelul, ne scrii pe WhatsApp, iar noi ne ocupăm de restul.</p>
-    <p><a class="btn" href="/catalog/">Vezi catalogul</a></p>
-  </section>
-  <section aria-labelledby="noutati">
-    <h2 id="noutati">Noutăți</h2>
-    <ul class="grid">
-      {catalog.slice(0, 4).map((p) => <ProductCard product={p} />)}
-    </ul>
-  </section>
-</Base>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0B0E14" />
+    <title>{BRAND} — Sneakers</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:title" content={`${BRAND} — Sneakers`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content={canonical} />
+    <link rel="preload" href="/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="prefetch" href="/magazin/" />
+    <script is:inline>
+      document.documentElement.classList.add('js');
+      try { if (localStorage.getItem('noir-lang') === 'ro') document.documentElement.lang = 'ro'; } catch { /* storage blocked */ }
+    </script>
+  </head>
+  <body>
+    <main>
+      <!-- HERO: pinned poster -->
+      <section class="stage hero" data-stage="hero" aria-label="Intro">
+        <div class="pin ink">
+          <canvas id="scan" aria-hidden="true"></canvas>
+          <button type="button" class="langbtn mono" data-lang-toggle data-a="aria-label" data-a-en="Switch language to Romanian" data-a-ro="Schimbă limba în engleză" aria-label="Switch language to Romanian">
+            <span class="lg en">EN</span><span class="sep">/</span><span class="lg ro">RO</span>
+          </button>
+          <h1 class="poster mark" style="--chars:4" data-mark><span data-rev>{BRAND}</span></h1>
+          <p class="claim poster" data-claim>
+            {TAGLINE.split(' ').map((w, i) => (<><span class="w" style={`--d:${i * 40}ms`}>{w}</span>{' '}</>))}
+          </p>
+          <div class="cta"><a href="/magazin/" class="btn" data-enter data-rev style="--d:300ms">ENTER THE EXPERIENCE</a></div>
+          <ul class="meta mono" data-meta>
+            <li data-rev style={rev(1)}><L en={`Sneakers · ${catalog.length} models`} ro={`Sneakers · ${catalog.length} modele`} /></li>
+            <li data-rev style={rev(2)}><L en="In stock 24h" ro="Pe stoc 24h" /></li>
+            <li data-rev style={rev(3)}><L en="Orders on WhatsApp" ro="Comenzi pe WhatsApp" /></li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- LADDER: pinned numeric scale -->
+      <section class="stage ladder" data-stage="ladder" aria-label="How to order">
+        <div class="pin glc">
+          <span class="corner tl mono"><L en="How to order" ro="Cum comanzi" /></span>
+          <span class="corner tr mono" data-step>STEP 1/4</span>
+          <div class="ladder-grid">
+            <div class="bignum poster" data-num aria-hidden="true"><span data-lead>0</span><span class="or" data-tail>01</span></div>
+            <ol class="rows">
+              {ladder.map((r) => (
+                <li class="row" data-row data-n={r.n}>
+                  <h3 class="sub"><L en={r.en[0]!} ro={r.ro[0]!} /></h3>
+                  <p><L en={r.en[1]!} ro={r.ro[1]!} /></p>
+                </li>
+              ))}
+            </ol>
+          </div>
+          <div class="meter" data-meter></div>
+        </div>
+      </section>
+
+      <!-- WHITEOUT: scroll-erased headline -->
+      <section class="stage whiteout" data-stage="whiteout" aria-label="Manifesto">
+        <div class="pin glc center">
+          <h2 class="poster mask" data-mask>
+            <span class="line"><L en="No" ro="Fără" /></span>
+            <span class="line"><L en="noise." ro="zgomot." /></span>
+            <span class="line"><L en="Just movement." ro="Doar mișcare." /></span>
+          </h2>
+          <p class="mono cap" data-cap><L en="Sneakers in dark shades, cut clean" ro="Sneakers în nuanțe închise, croite curat" /></p>
+        </div>
+      </section>
+
+      <!-- BAND: what you get -->
+      <section class="band ink" aria-labelledby="h-primesti">
+        <span class="corner tl mono" data-rev><L en="Delivery" ro="Livrare" /></span>
+        <span class="corner tr mono" data-rev style="--d:60ms">005</span>
+        <div class="in-wrap">
+          <h2 class="poster h2" id="h-primesti" data-words><Words en="What you get with every order" ro="Ce primești la fiecare comandă" /></h2>
+          <div class="cells">
+            {cells.map((c, i) => (
+              <div class="cell" data-rev style={rev(i, 70)}>
+                <h3 class="sub" data-rev style={rev(i + 1, 70)}><L en={c.en[0]!} ro={c.ro[0]!} /></h3>
+                <p data-rev style={rev(i + 2, 70)}><L en={c.en[1]!} ro={c.ro[1]!} /></p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <!-- BAND: models -->
+      <section class="band glc" aria-labelledby="h-modele">
+        <span class="corner tl mono" data-rev><L en="Models" ro="Modele" /></span>
+        <span class="corner tr mono" data-rev style="--d:60ms">006</span>
+        <div class="in-wrap">
+          <h2 class="poster h2" id="h-modele" data-words><Words en="Four silhouettes from the collection" ro="Patru siluete din colecție" /></h2>
+          <div class="people">
+            {plates.map((p, i) => (
+              <a class="person" href={`/catalog/${p.slug}/`} data-rev style={rev(i, 80)}>
+                <canvas data-plate={i + 1} aria-hidden="true"></canvas>
+                <span class="sub pname" data-rev style={rev(i + 1, 80)}>{p.name}</span>
+                <span class="mono pmeta" data-rev style={rev(i + 2, 80)}>{money(p.price)}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <!-- BAND: prices -->
+      <section class="band ink" aria-labelledby="h-preturi">
+        <span class="corner tl mono" data-rev><L en="Prices" ro="Prețuri" /></span>
+        <span class="corner tr mono" data-rev style="--d:60ms">007</span>
+        <div class="in-wrap">
+          <h2 class="poster h2" id="h-preturi" data-words><Words en="Prices without surprises" ro="Prețuri fără surprize" /></h2>
+          <div class="tariff">
+            {catalog.map((p, i) => (
+              <a class="trow" href={`/catalog/${p.slug}/`} data-rev style={rev(i, 45)}>
+                <span class="sub tlabel" data-rev style={rev(i + 1, 45)}>{p.name}</span>
+                <span class="tdesc"><L
+                  en={`${categoryLabels[p.category] ?? p.category} · ${colorEn(p)} · ${genderLabelsEn[p.gender]} · ${stockLabelsEn[p.stock]}`}
+                  ro={`${categoryLabels[p.category] ?? p.category} · ${p.colorLabel} · ${genderLabels[p.gender]} · ${stockLabels[p.stock]}`} /></span>
+                <span class="mono price" data-rev style={rev(i + 2, 45)}>{money(p.price)}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <!-- BAND: faq -->
+      <section class="band glc" aria-labelledby="h-faq">
+        <span class="corner tl mono" data-rev><L en="Questions" ro="Întrebări" /></span>
+        <span class="corner tr mono" data-rev style="--d:60ms">008</span>
+        <div class="in-wrap">
+          <h2 class="poster h2" id="h-faq" data-words><Words en="Frequently asked questions" ro="Întrebări frecvente" /></h2>
+          <div class="faq">
+            {faq.map((f, i) => (
+              <details data-rev style={rev(i, 60)}>
+                <summary class="sub"><span><L en={f.en[0]!} ro={f.ro[0]!} /></span><i class="plus" aria-hidden="true"></i></summary>
+                <p><L en={f.en[1]!} ro={f.ro[1]!} /></p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot ink">
+      <div class="in-wrap">
+        <p class="poster closing" data-words><Words en="Enter the collection" ro="Intră în colecție" /></p>
+        <a href="/magazin/" class="btn" data-enter data-rev>ENTER THE EXPERIENCE</a>
+        <div class="foot-lines mono">
+          <span data-rev style={rev(1)}>© {BRAND}</span>
+          <a data-rev style={rev(2)} href={`https://wa.me/${WHATSAPP}`}>WhatsApp {WHATSAPP_DISPLAY}</a>
+          <a data-rev style={rev(3)} href="/garantie/"><L en="Warranty and delivery" ro="Garanție și livrare" /></a>
+          <button type="button" class="langbtn inline mono" data-lang-toggle aria-label="Switch language" data-a="aria-label" data-a-en="Switch language to Romanian" data-a-ro="Schimbă limba în engleză"><span class="lg en">EN</span><span class="sep">/</span><span class="lg ro">RO</span></button>
+        </div>
+      </div>
+    </footer>
+
+    <!-- ENTER transition: shutters + orange band + scan lines + wordmark. transform/opacity only. -->
+    <div class="warp" aria-hidden="true">
+      {strips.map((i) => <i class="strip" style={`--i:${i}`}></i>)}
+      <i class="wband"></i>
+      <span class="wmark poster">{BRAND}</span>
+    </div>
+    <div class="grain" aria-hidden="true"></div>
+
+    <script>
+      import { initPoster } from '../scripts/poster';
+      import { initLang } from '../scripts/lang';
+      initLang();
+      initPoster();
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  :root { --ink: #0B0E14; --deep: #07090D; --glacier: #F2F4F1; --white: #FAFBFA; --or: #FF4D00; --tod: #E9EDF2; --tol: #12161D;
+    --e: cubic-bezier(0.16, 1, 0.3, 1); --g: clamp(1.25rem, 4vw, 4rem); }
+  * { box-sizing: border-box; }
+  html { background: var(--ink); -webkit-text-size-adjust: 100%; }
+  body { margin: 0; overflow-x: clip; background: var(--ink); color: var(--tod); font: 400 16px/1.5 'Archivo', system-ui, sans-serif; }
+  a { color: inherit; }
+  html[lang='en'] [data-l='ro'], html[lang='ro'] [data-l='en'] { display: none !important; }
+
+  .ink { background: var(--ink); color: var(--tod); --hl: rgba(233, 237, 242, 0.18); }
+  .glc { background: var(--glacier); color: var(--tol); --hl: rgba(18, 22, 29, 0.2); }
+  .poster { font-weight: 900; font-stretch: 63%; text-transform: uppercase; letter-spacing: -0.02em; line-height: 0.88; margin: 0; }
+  .sub { font-weight: 800; font-stretch: 74%; text-transform: uppercase; letter-spacing: -0.015em; line-height: 1; margin: 0; }
+  .mono { font: 400 11px/1.4 'Space Mono', ui-monospace, monospace; letter-spacing: 0.16em; text-transform: uppercase; }
+  .or { color: var(--or); }
+
+  /* Reveal atoms */
+  .js [data-rev] { opacity: 0; transform: translateY(0.9rem); transition: opacity 1.1s var(--e) var(--d, 0ms), transform 1.1s var(--e) var(--d, 0ms); }
+  .js [data-rev].in { opacity: 1; transform: none; }
+  .w { margin-right: 0.24em; }
+  .js .w { display: inline-block; opacity: 0; transform: translateY(0.4em); transition: opacity 1.1s var(--e) var(--d, 0ms), transform 1.1s var(--e) var(--d, 0ms); }
+  .js [data-words].in .w, .js .claim .w { opacity: 1; transform: none; }
+  .js .claim .w { transition: none; }
+
+  /* Pinned stages */
+  .stage { position: relative; --p: 0; }
+  .pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; contain: paint; }
+  .hero { height: 300vh; height: 300svh; }
+  .ladder { height: 400vh; height: 400svh; }
+  .whiteout { height: 240vh; height: 240svh; }
+  .center { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .corner { position: absolute; top: 1.25rem; z-index: 3; }
+  .corner.tl { left: var(--g); }
+  .corner.tr { right: var(--g); opacity: 0.42; }
+  [data-rev].corner.tr.in { opacity: 0.42; }
+
+  /* Hero */
+  #scan { position: absolute; inset: 0; width: 100%; height: 100%; display: block; background: linear-gradient(180deg, #0B0E14, #07090D); }
+  .mark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--white);
+    font-size: min(clamp(4rem, 33vw, 40rem), calc(94vw / (var(--chars) * 0.56)));
+    will-change: transform, opacity; pointer-events: none; }
+  .claim { position: absolute; inset: 0 var(--g); display: flex; flex-wrap: wrap; align-content: center; justify-content: center; text-align: center; color: var(--tod);
+    font-size: clamp(2.2rem, 9vw, 7rem); opacity: 0; will-change: opacity; pointer-events: none; }
+  .cta { position: absolute; left: 0; right: 0; bottom: calc(4.9rem + env(safe-area-inset-bottom)); display: flex; justify-content: center; z-index: 4; }
+  .meta { position: absolute; left: var(--g); right: var(--g); bottom: calc(1.25rem + env(safe-area-inset-bottom)); margin: 0; padding: 0; list-style: none;
+    display: flex; justify-content: space-between; gap: 0.75rem; will-change: opacity; }
+  .meta li:nth-child(2) { text-align: center; }
+  .meta li:last-child { text-align: right; }
+  .btn { display: inline-flex; align-items: center; min-height: 52px; padding: 0 1.75rem; background: var(--or); color: var(--ink); text-decoration: none;
+    font: 400 11px/1 'Space Mono', ui-monospace, monospace; letter-spacing: 0.16em; text-transform: uppercase; border: 0; border-radius: 0; touch-action: manipulation; }
+  .btn:hover, .btn:focus-visible { background: var(--white); outline: none; }
+
+  /* Ladder */
+  .ladder-grid { position: absolute; inset: 0; padding: 4.5rem var(--g) 2.5rem; max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 1fr; align-content: center; gap: 1.5rem; }
+  .bignum { font-size: clamp(5rem, 17vw, 15rem); white-space: nowrap; }
+  .rows { list-style: none; margin: 0; padding: 0; }
+  .row { opacity: 0.3; padding: 0.9rem 0; border-top: 1px solid var(--hl); transition: opacity 0.9s var(--e), padding 0.9s var(--e); }
+  .row:last-child { border-bottom: 1px solid var(--hl); }
+  .row.on { opacity: 1; padding-left: 14px; }
+  .row .sub { font-size: clamp(1.4rem, 4.4vw, 2.1rem); }
+  .row p { margin: 0.35rem 0 0; font-size: 13.5px; line-height: 1.45; max-width: 34rem; }
+  .meter { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--or); transform: scaleX(0); transform-origin: 0 50%; will-change: transform; }
+  @media (min-width: 860px) { .ladder-grid { grid-template-columns: 1.1fr 1fr; align-items: center; gap: 3rem; } }
+
+  /* Whiteout */
+  .mask { --p: 0; font-size: clamp(2.4rem, 9vw, 7.5rem); padding: 0 var(--g);
+    -webkit-mask-image: linear-gradient(180deg, #000 calc((1 - var(--p)) * 100%), transparent calc((1 - var(--p)) * 100% + 14%));
+    mask-image: linear-gradient(180deg, #000 calc((1 - var(--p)) * 100%), transparent calc((1 - var(--p)) * 100% + 14%)); }
+  .mask .line { display: block; }
+  .cap { margin: 1.5rem 0 0; will-change: opacity; }
+
+  /* Bands */
+  .band { position: relative; padding: clamp(5.5rem, 12vw, 9rem) 0 clamp(4rem, 9vw, 7rem); }
+  .in-wrap { max-width: 1240px; margin: 0 auto; padding: 0 var(--g); }
+  .h2 { font-size: clamp(2.6rem, 8vw, 6.5rem); margin-bottom: clamp(2rem, 5vw, 3.5rem); }
+  .cells { display: grid; grid-template-columns: 1fr; gap: 1px; background: var(--hl); border: 1px solid var(--hl); }
+  .cell { background: var(--ink); padding: clamp(1.25rem, 3vw, 2rem); }
+  .cell .sub { font-size: clamp(1.6rem, 4vw, 2.4rem); margin-bottom: 0.75rem; }
+  .cell p { margin: 0; font-size: 14px; max-width: 26rem; opacity: 0.85; }
+  @media (min-width: 800px) { .cells { grid-template-columns: repeat(3, 1fr); } }
+
+  .people { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--hl); border: 1px solid var(--hl); }
+  .person { display: block; background: var(--glacier); padding: 0.6rem 0.6rem 1rem; text-decoration: none; }
+  .person canvas { display: block; width: 100%; aspect-ratio: 4 / 5; }
+  .pname { display: block; margin-top: 0.7rem; font-size: clamp(1.1rem, 3.4vw, 1.6rem); }
+  .pmeta { display: block; margin-top: 0.3rem; opacity: 0.6; }
+  @media (min-width: 900px) { .people { grid-template-columns: repeat(4, 1fr); } }
+
+  .tariff { border-top: 1px solid var(--hl); }
+  .trow { display: grid; grid-template-columns: 1fr auto; gap: 0.35rem 1rem; align-items: baseline; padding: 1.1rem 0; border-bottom: 1px solid var(--hl); text-decoration: none; }
+  .tlabel { font-size: clamp(1.3rem, 4vw, 1.8rem); }
+  .tdesc { grid-column: 1 / -1; grid-row: 2; font-size: 13.5px; opacity: 0.72; }
+  .price { color: var(--or); grid-column: 2; grid-row: 1; }
+  .trow:hover .tlabel, .trow:focus-visible .tlabel { color: var(--white); }
+  @media (min-width: 700px) {
+    .trow { grid-template-columns: 16rem 1fr auto; }
+    .tdesc { grid-column: 2; grid-row: 1; }
+    .price { grid-column: 3; }
+  }
+
+  .faq { border-top: 1px solid var(--hl); }
+  .faq details { border-bottom: 1px solid var(--hl); }
+  .faq summary { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1.15rem 0; cursor: pointer; list-style: none; font-size: clamp(1.2rem, 3.6vw, 1.6rem); }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq p { margin: 0 0 1.25rem; max-width: 38rem; font-size: 14px; }
+  .plus { position: relative; width: 14px; height: 14px; flex: none; }
+  .plus::before, .plus::after { content: ''; position: absolute; background: currentColor; transition: transform 0.6s var(--e); }
+  .plus::before { left: 0; right: 0; top: 6px; height: 2px; }
+  .plus::after { top: 0; bottom: 0; left: 6px; width: 2px; }
+  details[open] .plus::after { transform: scaleY(0); }
+
+  /* Footer */
+  .foot { padding: clamp(4rem, 9vw, 7rem) 0 calc(2rem + env(safe-area-inset-bottom)); }
+  .closing { font-size: clamp(2.6rem, 10vw, 8rem); margin-bottom: 2rem; }
+  .foot-lines { display: flex; flex-wrap: wrap; gap: 0.75rem 2rem; margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--hl); }
+  .foot-lines a { text-decoration: none; }
+  .foot-lines a:hover { color: var(--white); }
+
+  /* Grain */
+  .grain { position: fixed; inset: 0; z-index: 50; pointer-events: none; opacity: 0.045;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+  /* Language toggle */
+  .langbtn { position: absolute; top: 1.1rem; right: var(--g); z-index: 5; display: inline-flex; gap: 0.35rem; min-height: 44px; align-items: center; padding: 0 0.25rem; background: none; border: 0; color: var(--tod); cursor: pointer; }
+  .langbtn.inline { position: static; min-height: 0; margin-left: auto; padding: 0; color: inherit; }
+  .langbtn .lg { opacity: 0.45; }
+  .langbtn .sep { opacity: 0.3; }
+  html[lang='en'] .langbtn .lg.en, html[lang='ro'] .langbtn .lg.ro { opacity: 1; color: var(--or); }
+  .langbtn:focus-visible { outline: 1px solid var(--or); outline-offset: 2px; }
+
+  /* ENTER transition */
+  .warp { position: fixed; inset: 0; z-index: 60; pointer-events: none; visibility: hidden; overflow: hidden; }
+  .leaving .warp { visibility: visible; }
+  .leaving body { overflow: hidden; }
+  .strip { position: absolute; left: 0; right: 0; top: calc(var(--i) * 12.5%); height: calc(12.5% + 1px); background: var(--ink); border-bottom: 1px solid rgba(255, 77, 0, 0.55);
+    transform: scaleX(0); transform-origin: 0 50%; will-change: transform; }
+  .strip:nth-child(even) { transform-origin: 100% 50%; }
+  .leaving .strip { transform: scaleX(1); transition: transform 0.62s var(--e) calc(var(--i) * 45ms); }
+  .wband { position: absolute; top: 0; bottom: 0; left: 0; width: 55%; background: linear-gradient(90deg, rgba(255, 77, 0, 0), rgba(255, 77, 0, 0.9) 55%, rgba(255, 77, 0, 0));
+    transform: translate3d(-110%, 0, 0); will-change: transform; }
+  .leaving .wband { transform: translate3d(200%, 0, 0); transition: transform 0.95s cubic-bezier(0.65, 0, 0.35, 1) 0.08s; }
+  .wmark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--white); font-size: min(clamp(4rem, 33vw, 40rem), calc(94vw / 2.24));
+    opacity: 0; transform: scale(0.82); will-change: transform, opacity; }
+  .leaving .wmark { opacity: 1; transform: scale(1); transition: opacity 0.45s ease 0.3s, transform 0.9s var(--e) 0.3s; }
+  .warp::before { content: ''; position: absolute; inset: 0; z-index: 2; opacity: 0; background: repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0 1px, transparent 1px 5px); }
+  .leaving .warp::before { opacity: 1; transition: opacity 0.4s ease 0.2s; }
+  .wmark, .wband { z-index: 1; }
+  .leaving main, .leaving .foot { opacity: 0; transition: opacity 0.5s ease; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mask { -webkit-mask-image: none !important; mask-image: none !important; }
+    .js [data-rev], .js .w { opacity: 1; transform: none; transition: none; }
+    .row, .plus::before, .plus::after { transition: none; }
+    .warp { display: none; }
+  }
+</style>

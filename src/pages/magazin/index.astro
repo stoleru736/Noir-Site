@@ -1,0 +1,38 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import Shoe from '../../components/Shoe.astro';
+import L from '../../components/L.astro';
+import { BRAND, TAGLINE, catalog, categoryLabels } from '../../data/site';
+
+const featured = catalog[0]!;
+const categories = [...new Set(catalog.map((p) => p.category))];
+---
+
+<Base title={`${BRAND} — Sneakers`} description={`${BRAND}: ${TAGLINE.toLowerCase()} Dark, minimal sneakers. Order simply on WhatsApp.`}>
+  <section class="editorial" aria-label="Featured model" data-a="aria-label" data-a-en="Featured model" data-a-ro="Model recomandat">
+    <a href={`/catalog/${featured.slug}/`} class="editorial-card">
+      <Shoe hex={featured.hex} label={featured.name} />
+      <div class="editorial-text">
+        <p class="note"><L en="Featured model" ro="Model recomandat" /></p>
+        <h2>{featured.name}</h2>
+        <p class="bigprice">{featured.price} lei</p>
+        <span class="btn solid"><L en="View model" ro="Vezi modelul" /></span>
+      </div>
+    </a>
+  </section>
+  {categories.map((c) => (
+    <section class="rail" aria-label={categoryLabels[c] ?? c}>
+      <h2>{categoryLabels[c] ?? c}</h2>
+      <ul class="rail-list">
+        {catalog.filter((p) => p.category === c).map((p) => <ProductCard product={p} />)}
+      </ul>
+    </section>
+  ))}
+  <section aria-labelledby="toate">
+    <h2 id="toate"><L en="All models" ro="Toate modelele" /></h2>
+    <ul class="grid">
+      {catalog.map((p) => <ProductCard product={p} />)}
+    </ul>
+  </section>
+</Base>
