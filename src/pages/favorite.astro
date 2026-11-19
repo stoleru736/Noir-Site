@@ -1,15 +1,16 @@
 ---
 import Base from '../layouts/Base.astro';
 import ProductCard from '../components/ProductCard.astro';
+import L from '../components/L.astro';
 import { BRAND, catalog } from '../data/site';
 ---
 
-<Base title={`Favorite — ${BRAND}`} description="Modelele tale favorite.">
-  <h1>Favorite</h1>
+<Base title={`Favorites — ${BRAND}`} description="Your favourite models.">
+  <h1><L en="Favorites" ro="Favorite" /></h1>
   <ul class="grid" id="fav-grid">
     {catalog.map((p) => <ProductCard product={p} />)}
   </ul>
-  <p class="empty" id="fav-empty" hidden>Nu ai încă favorite. Apasă inima de pe un model.</p>
+  <p class="empty" id="fav-empty" hidden><L en="No favorites yet. Tap the heart on a model." ro="Nu ai încă favorite. Apasă inima de pe un model." /></p>
   <script>
     import { getFavs } from '../scripts/cart';
     const items = document.querySelectorAll<HTMLElement>('#fav-grid > li');

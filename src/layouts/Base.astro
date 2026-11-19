@@ -1,5 +1,7 @@
 ---
+import '../styles/fonts.css';
 import '../styles/global.css';
+import L from '../components/L.astro';
 import { BRAND, WHATSAPP_DISPLAY, catalog } from '../data/site';
 
 interface Props {
@@ -17,46 +19,55 @@ const lookupJson = JSON.stringify(lookup).replace(/</g, '\\u003c');
 ---
 
 <!doctype html>
-<html lang="ro">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#0b0b0b" />
+    <meta name="theme-color" content="#0B0E14" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
-    <meta property="og:locale" content="ro_RO" />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:url" content={canonical} />
+    <link rel="preload" href="/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="sitemap" href="/sitemap-index.xml" />
+    <script is:inline>
+      try {
+        const d = document.documentElement;
+        if (localStorage.getItem('noir-lang') === 'ro') d.lang = 'ro';
+        if (sessionStorage.getItem('noir-enter')) { sessionStorage.removeItem('noir-enter'); d.classList.add('entering'); }
+      } catch { /* storage blocked */ }
+    </script>
     {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
   </head>
   <body>
-    <a class="skip" href="#main">Sari la conținut</a>
+    <a class="skip" href="#main"><L en="Skip to content" ro="Sari la conținut" /></a>
     <div id="store">
       <header class="site">
         <div class="wrap bar">
-          <a class="logo" href="/magazin/" aria-label={`${BRAND}, acasă`}>{BRAND}</a>
-          <nav aria-label="Principal" class="icons">
+          <a class="logo" href="/magazin/" aria-label={`${BRAND}, home`} data-a="aria-label" data-a-en={`${BRAND}, home`} data-a-ro={`${BRAND}, acasă`}>{BRAND}</a>
+          <nav aria-label="Main" class="icons" data-a="aria-label" data-a-en="Main" data-a-ro="Principal">
             <a class="textlink" href="/catalog/">Catalog</a>
-            <button type="button" class="icon" id="search-toggle" aria-label="Caută" aria-expanded="false" aria-controls="searchbar">
+            <button type="button" class="icon" id="search-toggle" aria-label="Search" data-a="aria-label" data-a-en="Search" data-a-ro="Caută" aria-expanded="false" aria-controls="searchbar">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
             </button>
-            <a class="icon" href="/favorite/" aria-label="Favorite">
+            <a class="icon" href="/favorite/" aria-label="Favorites" data-a="aria-label" data-a-en="Favorites" data-a-ro="Favorite">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.600-7 10-7 10Z"></path></svg>
               <span class="count" data-fav-count hidden></span>
             </a>
-            <button type="button" class="icon" id="bag-open" aria-label="Coș">
+            <button type="button" class="icon" id="bag-open" aria-label="Bag" data-a="aria-label" data-a-en="Bag" data-a-ro="Coș">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 8h14l-1 12H6L5 8Z"></path><path d="M9 8V6a3 3 0 0 1 6 0v2"></path></svg>
               <span class="count" data-bag-count hidden></span>
             </button>
+            <button type="button" class="icon langtoggle mono" data-lang-toggle aria-label="Switch language to Romanian" data-a="aria-label" data-a-en="Switch language to Romanian" data-a-ro="Schimbă limba în engleză"><span class="lg en">EN</span><span class="sep">/</span><span class="lg ro">RO</span></button>
           </nav>
         </div>
         <form class="searchbar wrap" id="searchbar" action="/catalog/" method="get" role="search" hidden>
-          <input type="search" name="q" placeholder="Caută un model…" aria-label="Caută un model" autocomplete="off" />
-          <button type="submit" class="btn">Caută</button>
+          <input type="search" name="q" placeholder="Search a model…" aria-label="Search a model" data-a="placeholder,aria-label" data-a-en="Search a model…" data-a-ro="Caută un model…" autocomplete="off" />
+          <button type="submit" class="btn"><L en="Search" ro="Caută" /></button>
         </form>
       </header>
       <main id="main" class="wrap">
@@ -64,27 +75,32 @@ const lookupJson = JSON.stringify(lookup).replace(/</g, '\\u003c');
       </main>
       <footer>
         <div class="wrap">
-          <p>{BRAND} · Comenzi pe WhatsApp: {WHATSAPP_DISPLAY}</p>
-          <p><a href="/garantie/">Garanție și livrare</a></p>
+          <p>{BRAND} · <L en="Orders on WhatsApp:" ro="Comenzi pe WhatsApp:" /> {WHATSAPP_DISPLAY}</p>
+          <p><a href="/garantie/"><L en="Warranty and delivery" ro="Garanție și livrare" /></a></p>
         </div>
       </footer>
     </div>
 
+    <div class="warp-in" aria-hidden="true">
+      {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => <i style={`--i:${i}`}></i>)}
+    </div>
+
     <dialog id="bag" aria-labelledby="bag-title">
-      <div class="bag-head"><h2 id="bag-title">Coșul tău</h2><button type="button" class="icon" id="bag-close" aria-label="Închide">✕</button></div>
+      <div class="bag-head"><h2 id="bag-title"><L en="Your bag" ro="Coșul tău" /></h2><button type="button" class="icon" id="bag-close" aria-label="Close" data-a="aria-label" data-a-en="Close" data-a-ro="Închide">✕</button></div>
       <ul id="bag-list" class="bag-list"></ul>
-      <p id="bag-empty" class="note">Coșul e gol.</p>
+      <p id="bag-empty" class="note"><L en="Your bag is empty." ro="Coșul e gol." /></p>
       <div id="bag-foot" hidden>
         <p class="bag-total">Total: <strong id="bag-total"></strong></p>
-        <a class="btn solid wide" id="bag-send" href="#" rel="noopener">Trimite comanda pe WhatsApp</a>
-        <button type="button" class="linkbtn" id="bag-clear">Golește coșul</button>
-        <p class="note">Nu plătești acum. Confirmăm pe WhatsApp mărimile și livrarea.</p>
+        <a class="btn solid wide" id="bag-send" href="#" rel="noopener"><L en="Send order on WhatsApp" ro="Trimite comanda pe WhatsApp" /></a>
+        <button type="button" class="linkbtn" id="bag-clear"><L en="Empty bag" ro="Golește coșul" /></button>
+        <p class="note"><L en="You pay nothing now. We confirm sizes and delivery on WhatsApp." ro="Nu plătești acum. Confirmăm pe WhatsApp mărimile și livrarea." /></p>
       </div>
     </dialog>
 
     <script type="application/json" id="catalog-data" set:html={lookupJson} />
     <script>
       import { addItem, getCart, changeQty, clearCart, cartCount, getFavs, toggleFav } from '../scripts/cart';
+      import { getLang, initLang } from '../scripts/lang';
 
       interface Info { name: string; price: number; color: string; stock: string }
       const info: Record<string, Info> = JSON.parse(document.getElementById('catalog-data')?.textContent ?? '{}');
@@ -127,7 +143,8 @@ const lookupJson = JSON.stringify(lookup).replace(/</g, '\\u003c');
           };
           const n = document.createElement('span');
           n.textContent = String(i.qty);
-          qty.append(mk('Mai puțin', '−', -1), n, mk('Mai mult', '+', 1));
+          const ro = getLang() === 'ro';
+          qty.append(mk(ro ? 'Mai puțin' : 'Fewer', '−', -1), n, mk(ro ? 'Mai mult' : 'More', '+', 1));
           li.append(name, price, qty);
           list.append(li);
         }
@@ -149,6 +166,7 @@ const lookupJson = JSON.stringify(lookup).replace(/</g, '\\u003c');
 
       const refresh = () => { setCount('[data-bag-count]', cartCount()); renderBag(); syncFavs(); };
       document.addEventListener('od:change', refresh);
+      document.addEventListener('noir:lang', refresh);
       addEventListener('storage', refresh);
       refresh();
 
@@ -172,6 +190,7 @@ const lookupJson = JSON.stringify(lookup).replace(/</g, '\\u003c');
         toggle.setAttribute('aria-expanded', String(show));
         if (show) bar.querySelector('input')?.focus();
       });
+      initLang();
       void addItem;
     </script>
   </body>

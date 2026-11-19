@@ -1,0 +1,7 @@
+---
+// Per-word spans (rise on a 40ms stagger) for both languages.
+interface Props { en: string; ro: string }
+const { en, ro } = Astro.props;
+const split = (t: string) => t.split(' ').map((w, i) => ({ w, d: i * 40 }));
+---
+<span data-l="en">{split(en).map((x) => (<><span class="w" style={`--d:${x.d}ms`}>{x.w}</span>{' '}</>))}</span><span data-l="ro">{split(ro).map((x) => (<><span class="w" style={`--d:${x.d}ms`}>{x.w}</span>{' '}</>))}</span>

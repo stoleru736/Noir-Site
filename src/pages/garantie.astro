@@ -1,19 +1,20 @@
 ---
 import Base from '../layouts/Base.astro';
+import L from '../components/L.astro';
 import { BRAND, WHATSAPP_DISPLAY } from '../data/site';
 ---
 
-<Base title={`Garanție și livrare — ${BRAND}`} description={`Condiții de retur, livrare și pre-order ${BRAND}.`}>
+<Base title={`Warranty and delivery — ${BRAND}`} description={`${BRAND} returns, delivery and pre-order terms.`}>
   <div class="prose">
-    <h1>Garanție și livrare</h1>
-    <h2>Livrare</h2>
+    <h1><L en="Warranty and delivery" ro="Garanție și livrare" /></h1>
+    <h2><L en="Delivery" ro="Livrare" /></h2>
     <ul>
-      <li><strong>Pe stoc 24h:</strong> livrare în 1–2 zile, plata ramburs la curier.</li>
-      <li><strong>Pre-order:</strong> livrare în 9–21 zile, cu avans de 10% la comandă.</li>
+      <li><strong><L en="In stock 24h:" ro="Pe stoc 24h:" /></strong> <L en="delivery in 1–2 days, pay on delivery to the courier." ro="livrare în 1–2 zile, plata ramburs la curier." /></li>
+      <li><strong>Pre-order:</strong> <L en="delivery in 9–21 days, with a 10% advance at order." ro="livrare în 9–21 zile, cu avans de 10% la comandă." /></li>
     </ul>
-    <h2>Retur</h2>
-    <p>Returul se acceptă doar pentru produse cu defecte sau pentru un model/mărime diferită față de comandă. Contactează-ne pe WhatsApp la {WHATSAPP_DISPLAY}, cu poze.</p>
-    <h2>Cod de reducere</h2>
-    <p>Ai un cod de 5%? Spune-ne codul în mesajul de comandă.</p>
+    <h2><L en="Returns" ro="Retur" /></h2>
+    <p><L en={`Returns are accepted only for defective items or a model/size different from the order. Contact us on WhatsApp at ${WHATSAPP_DISPLAY}, with photos.`} ro={`Returul se acceptă doar pentru produse cu defecte sau pentru un model/mărime diferită față de comandă. Contactează-ne pe WhatsApp la ${WHATSAPP_DISPLAY}, cu poze.`} /></p>
+    <h2><L en="Discount code" ro="Cod de reducere" /></h2>
+    <p><L en="Have a 5% code? Tell us the code in your order message." ro="Ai un cod de 5%? Spune-ne codul în mesajul de comandă." /></p>
   </div>
 </Base>

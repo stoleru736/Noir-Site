@@ -1,39 +1,42 @@
 ---
-import { BRAND, TAGLINE, WHATSAPP_DISPLAY, WHATSAPP, catalog, stockLabels, categoryLabels, genderLabels } from '../data/site';
+import '../styles/fonts.css';
+import L from '../components/L.astro';
+import Words from '../components/Words.astro';
+import { BRAND, TAGLINE, WHATSAPP_DISPLAY, WHATSAPP, catalog, stockLabels, stockLabelsEn, categoryLabels, genderLabels, genderLabelsEn, colorEn } from '../data/site';
 
 const canonical = new URL(Astro.url.pathname, Astro.site);
-const description = `${BRAND}: ${TAGLINE.toLowerCase()} Sneakers într-o estetică închisă, minimală. Comandă simplu pe WhatsApp.`;
+const description = `${BRAND}: ${TAGLINE.toLowerCase()} Dark, minimal sneakers. Order simply on WhatsApp.`;
 
-const words = (text: string, start = 0) => text.split(' ').map((w, i) => ({ w, d: (start + i) * 40 }));
 const rev = (i: number, step = 60) => `--d:${i * step}ms`;
 const money = (n: number) => `${n} LEI`;
 
 const ladder = [
-  { n: '001', title: 'Alegi modelul', text: 'Răsfoiești colecția NOIR și alegi culoarea care ți se potrivește.' },
-  { n: '002', title: 'Alegi mărimea', text: 'Mărimea o alegi direct pe pagina produsului, apoi adaugi în coș.' },
-  { n: '003', title: 'Trimiți pe WhatsApp', text: `Coșul pleacă într-un singur mesaj către ${WHATSAPP_DISPLAY}. Fără plată online.` },
-  { n: '004', title: 'Primești coletul', text: 'Pe stoc 24h: livrare în 1–2 zile, plata ramburs. Pre-order: 9–21 zile.' },
+  { n: '001', en: ['Pick a model', 'Browse the NOIR collection and choose the colour that suits you.'], ro: ['Alegi modelul', 'Răsfoiești colecția NOIR și alegi culoarea care ți se potrivește.'] },
+  { n: '002', en: ['Pick a size', 'Choose your size on the product page, then add it to the bag.'], ro: ['Alegi mărimea', 'Mărimea o alegi direct pe pagina produsului, apoi adaugi în coș.'] },
+  { n: '003', en: ['Send on WhatsApp', `Your bag goes out in one message to ${WHATSAPP_DISPLAY}. No online payment.`], ro: ['Trimiți pe WhatsApp', `Coșul pleacă într-un singur mesaj către ${WHATSAPP_DISPLAY}. Fără plată online.`] },
+  { n: '004', en: ['Get your parcel', 'In stock 24h: delivery in 1–2 days, pay on delivery. Pre-order: 9–21 days.'], ro: ['Primești coletul', 'Pe stoc 24h: livrare în 1–2 zile, plata ramburs. Pre-order: 9–21 zile.'] },
 ];
 
 const cells = [
-  { t: 'Pe stoc 24h', p: 'Modelele marcate „Pe stoc 24h” pleacă rapid. Livrare în 1–2 zile, plata ramburs la curier.' },
-  { t: 'Pre-order', p: 'Modelele pe comandă ajung în 9–21 de zile. Se achită un avans de 10% la comandă.' },
-  { t: 'Retur și garanție', p: 'Returul se acceptă pentru produse cu defecte sau model/mărime diferită față de comandă.' },
+  { en: ['In stock 24h', 'Models marked “In stock 24h” ship fast. Delivery in 1–2 days, pay on delivery.'], ro: ['Pe stoc 24h', 'Modelele marcate „Pe stoc 24h” pleacă rapid. Livrare în 1–2 zile, plata ramburs la curier.'] },
+  { en: ['Pre-order', 'Pre-order models arrive in 9–21 days. A 10% advance is paid at order.'], ro: ['Pre-order', 'Modelele pe comandă ajung în 9–21 de zile. Se achită un avans de 10% la comandă.'] },
+  { en: ['Returns and warranty', 'Returns are accepted for defective items or a different model/size than ordered.'], ro: ['Retur și garanție', 'Returul se acceptă pentru produse cu defecte sau model/mărime diferită față de comandă.'] },
 ];
 
 const plates = catalog.slice(0, 4);
 
 const faq = [
-  { q: 'Cum comand?', a: `Adaugi modelele în coș și trimiți comanda pe WhatsApp la ${WHATSAPP_DISPLAY}. Nu există plată online pe site.` },
-  { q: 'Cum se face livrarea și plata?', a: 'Pe stoc 24h: livrare în 1–2 zile, plata ramburs la curier.' },
-  { q: 'Cum funcționează pre-order?', a: 'Livrarea durează 9–21 de zile, cu avans de 10% la comandă.' },
-  { q: 'Pot returna comanda?', a: `Doar pentru produse cu defecte sau pentru un model/mărime diferită față de comandă. Scrie-ne pe WhatsApp la ${WHATSAPP_DISPLAY}, cu poze.` },
-  { q: 'Am un cod de reducere.', a: 'Spune-ne codul de 5% în mesajul de comandă.' },
+  { en: ['How do I order?', `Add models to the bag and send the order on WhatsApp at ${WHATSAPP_DISPLAY}. There is no online payment on the site.`], ro: ['Cum comand?', `Adaugi modelele în coș și trimiți comanda pe WhatsApp la ${WHATSAPP_DISPLAY}. Nu există plată online pe site.`] },
+  { en: ['How do delivery and payment work?', 'In stock 24h: delivery in 1–2 days, pay on delivery to the courier.'], ro: ['Cum se face livrarea și plata?', 'Pe stoc 24h: livrare în 1–2 zile, plata ramburs la curier.'] },
+  { en: ['How does pre-order work?', 'Delivery takes 9–21 days, with a 10% advance at order.'], ro: ['Cum funcționează pre-order?', 'Livrarea durează 9–21 de zile, cu avans de 10% la comandă.'] },
+  { en: ['Can I return my order?', `Only for defective items or a different model/size than ordered. Write to us on WhatsApp at ${WHATSAPP_DISPLAY}, with photos.`], ro: ['Pot returna comanda?', `Doar pentru produse cu defecte sau pentru un model/mărime diferită față de comandă. Scrie-ne pe WhatsApp la ${WHATSAPP_DISPLAY}, cu poze.`] },
+  { en: ['I have a discount code.', 'Tell us the 5% code in your order message.'], ro: ['Am un cod de reducere.', 'Spune-ne codul de 5% în mesajul de comandă.'] },
 ];
+const strips = [0, 1, 2, 3, 4, 5, 6, 7];
 ---
 
 <!doctype html>
-<html lang="ro">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -44,90 +47,92 @@ const faq = [
     <meta property="og:title" content={`${BRAND} — Sneakers`} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
-    <meta property="og:locale" content="ro_RO" />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:url" content={canonical} />
     <link rel="preload" href="/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="prefetch" href="/magazin/" />
-    <script is:inline>document.documentElement.classList.add('js');</script>
+    <script is:inline>
+      document.documentElement.classList.add('js');
+      try { if (localStorage.getItem('noir-lang') === 'ro') document.documentElement.lang = 'ro'; } catch { /* storage blocked */ }
+    </script>
   </head>
   <body>
     <main>
       <!-- HERO: pinned poster -->
-      <section class="stage hero" data-stage aria-label="Introducere">
+      <section class="stage hero" data-stage="hero" aria-label="Intro">
         <div class="pin ink">
           <canvas id="scan" aria-hidden="true"></canvas>
-          <h1 class="poster mark" style="--chars:4"><span data-rev>{BRAND}</span></h1>
-          <p class="claim poster">
-            {words(TAGLINE).map((x) => (<><span class="w" style={`--d:${x.d}ms`}>{x.w}</span>{' '}</>))}
+          <button type="button" class="langbtn mono" data-lang-toggle data-a="aria-label" data-a-en="Switch language to Romanian" data-a-ro="Schimbă limba în engleză" aria-label="Switch language to Romanian">
+            <span class="lg en">EN</span><span class="sep">/</span><span class="lg ro">RO</span>
+          </button>
+          <h1 class="poster mark" style="--chars:4" data-mark><span data-rev>{BRAND}</span></h1>
+          <p class="claim poster" data-claim>
+            {TAGLINE.split(' ').map((w, i) => (<><span class="w" style={`--d:${i * 40}ms`}>{w}</span>{' '}</>))}
           </p>
-          <div class="cta"><a href="/magazin/" class="btn" data-rev style="--d:300ms">ENTER THE EXPERIENCE</a></div>
-          <ul class="meta mono">
-            <li data-rev style={rev(1)}>Sneakers · {catalog.length} modele</li>
-            <li data-rev style={rev(2)}>Pe stoc 24h</li>
-            <li data-rev style={rev(3)}>Comenzi pe WhatsApp</li>
+          <div class="cta"><a href="/magazin/" class="btn" data-enter data-rev style="--d:300ms">ENTER THE EXPERIENCE</a></div>
+          <ul class="meta mono" data-meta>
+            <li data-rev style={rev(1)}><L en={`Sneakers · ${catalog.length} models`} ro={`Sneakers · ${catalog.length} modele`} /></li>
+            <li data-rev style={rev(2)}><L en="In stock 24h" ro="Pe stoc 24h" /></li>
+            <li data-rev style={rev(3)}><L en="Orders on WhatsApp" ro="Comenzi pe WhatsApp" /></li>
           </ul>
         </div>
       </section>
 
       <!-- LADDER: pinned numeric scale -->
-      <section class="stage ladder" data-stage data-ladder aria-label="Cum comanzi">
+      <section class="stage ladder" data-stage="ladder" aria-label="How to order">
         <div class="pin glc">
-          <span class="corner tl mono">Cum comanzi</span>
-          <span class="corner tr mono" data-step>PAS 1/4</span>
+          <span class="corner tl mono"><L en="How to order" ro="Cum comanzi" /></span>
+          <span class="corner tr mono" data-step>STEP 1/4</span>
           <div class="ladder-grid">
             <div class="bignum poster" data-num aria-hidden="true"><span data-lead>0</span><span class="or" data-tail>01</span></div>
             <ol class="rows">
               {ladder.map((r) => (
                 <li class="row" data-row data-n={r.n}>
-                  <h3 class="sub">{r.title}</h3>
-                  <p>{r.text}</p>
+                  <h3 class="sub"><L en={r.en[0]!} ro={r.ro[0]!} /></h3>
+                  <p><L en={r.en[1]!} ro={r.ro[1]!} /></p>
                 </li>
               ))}
             </ol>
           </div>
-          <div class="meter"></div>
+          <div class="meter" data-meter></div>
         </div>
       </section>
 
       <!-- WHITEOUT: scroll-erased headline -->
-      <section class="stage whiteout" data-stage aria-label="Manifest">
+      <section class="stage whiteout" data-stage="whiteout" aria-label="Manifesto">
         <div class="pin glc center">
-          <h2 class="poster mask">
-            <span class="line">Fără</span>
-            <span class="line">zgomot.</span>
-            <span class="line">Doar mișcare.</span>
+          <h2 class="poster mask" data-mask>
+            <span class="line"><L en="No" ro="Fără" /></span>
+            <span class="line"><L en="noise." ro="zgomot." /></span>
+            <span class="line"><L en="Just movement." ro="Doar mișcare." /></span>
           </h2>
-          <p class="mono cap">Sneakers în nuanțe închise, croite curat</p>
+          <p class="mono cap" data-cap><L en="Sneakers in dark shades, cut clean" ro="Sneakers în nuanțe închise, croite curat" /></p>
         </div>
       </section>
 
-      <!-- BAND: ce primești -->
+      <!-- BAND: what you get -->
       <section class="band ink" aria-labelledby="h-primesti">
-        <span class="corner tl mono" data-rev>Livrare</span>
+        <span class="corner tl mono" data-rev><L en="Delivery" ro="Livrare" /></span>
         <span class="corner tr mono" data-rev style="--d:60ms">005</span>
         <div class="in-wrap">
-          <h2 class="poster h2" id="h-primesti" data-words>
-            {words('Ce primești la fiecare comandă').map((x) => (<><span class="w" style={`--d:${x.d}ms`}>{x.w}</span>{' '}</>))}
-          </h2>
+          <h2 class="poster h2" id="h-primesti" data-words><Words en="What you get with every order" ro="Ce primești la fiecare comandă" /></h2>
           <div class="cells">
             {cells.map((c, i) => (
               <div class="cell" data-rev style={rev(i, 70)}>
-                <h3 class="sub" data-rev style={rev(i + 1, 70)}>{c.t}</h3>
-                <p data-rev style={rev(i + 2, 70)}>{c.p}</p>
+                <h3 class="sub" data-rev style={rev(i + 1, 70)}><L en={c.en[0]!} ro={c.ro[0]!} /></h3>
+                <p data-rev style={rev(i + 2, 70)}><L en={c.en[1]!} ro={c.ro[1]!} /></p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <!-- BAND: modele -->
+      <!-- BAND: models -->
       <section class="band glc" aria-labelledby="h-modele">
-        <span class="corner tl mono" data-rev>Modele</span>
+        <span class="corner tl mono" data-rev><L en="Models" ro="Modele" /></span>
         <span class="corner tr mono" data-rev style="--d:60ms">006</span>
         <div class="in-wrap">
-          <h2 class="poster h2" id="h-modele" data-words>
-            {words('Patru siluete din colecție').map((x) => (<><span class="w" style={`--d:${x.d}ms`}>{x.w}</span>{' '}</>))}
-          </h2>
+          <h2 class="poster h2" id="h-modele" data-words><Words en="Four silhouettes from the collection" ro="Patru siluete din colecție" /></h2>
           <div class="people">
             {plates.map((p, i) => (
               <a class="person" href={`/catalog/${p.slug}/`} data-rev style={rev(i, 80)}>
@@ -140,19 +145,19 @@ const faq = [
         </div>
       </section>
 
-      <!-- BAND: tarife -->
+      <!-- BAND: prices -->
       <section class="band ink" aria-labelledby="h-preturi">
-        <span class="corner tl mono" data-rev>Prețuri</span>
+        <span class="corner tl mono" data-rev><L en="Prices" ro="Prețuri" /></span>
         <span class="corner tr mono" data-rev style="--d:60ms">007</span>
         <div class="in-wrap">
-          <h2 class="poster h2" id="h-preturi" data-words>
-            {words('Prețuri fără surprize').map((x) => (<><span class="w" style={`--d:${x.d}ms`}>{x.w}</span>{' '}</>))}
-          </h2>
+          <h2 class="poster h2" id="h-preturi" data-words><Words en="Prices without surprises" ro="Prețuri fără surprize" /></h2>
           <div class="tariff">
             {catalog.map((p, i) => (
               <a class="trow" href={`/catalog/${p.slug}/`} data-rev style={rev(i, 45)}>
                 <span class="sub tlabel" data-rev style={rev(i + 1, 45)}>{p.name}</span>
-                <span class="tdesc">{categoryLabels[p.category] ?? p.category} · {p.colorLabel} · {genderLabels[p.gender]} · {stockLabels[p.stock]}</span>
+                <span class="tdesc"><L
+                  en={`${categoryLabels[p.category] ?? p.category} · ${colorEn(p)} · ${genderLabelsEn[p.gender]} · ${stockLabelsEn[p.stock]}`}
+                  ro={`${categoryLabels[p.category] ?? p.category} · ${p.colorLabel} · ${genderLabels[p.gender]} · ${stockLabels[p.stock]}`} /></span>
                 <span class="mono price" data-rev style={rev(i + 2, 45)}>{money(p.price)}</span>
               </a>
             ))}
@@ -162,17 +167,15 @@ const faq = [
 
       <!-- BAND: faq -->
       <section class="band glc" aria-labelledby="h-faq">
-        <span class="corner tl mono" data-rev>Întrebări</span>
+        <span class="corner tl mono" data-rev><L en="Questions" ro="Întrebări" /></span>
         <span class="corner tr mono" data-rev style="--d:60ms">008</span>
         <div class="in-wrap">
-          <h2 class="poster h2" id="h-faq" data-words>
-            {words('Întrebări frecvente').map((x) => (<><span class="w" style={`--d:${x.d}ms`}>{x.w}</span>{' '}</>))}
-          </h2>
+          <h2 class="poster h2" id="h-faq" data-words><Words en="Frequently asked questions" ro="Întrebări frecvente" /></h2>
           <div class="faq">
             {faq.map((f, i) => (
               <details data-rev style={rev(i, 60)}>
-                <summary class="sub"><span>{f.q}</span><i class="plus" aria-hidden="true"></i></summary>
-                <p>{f.a}</p>
+                <summary class="sub"><span><L en={f.en[0]!} ro={f.ro[0]!} /></span><i class="plus" aria-hidden="true"></i></summary>
+                <p><L en={f.en[1]!} ro={f.ro[1]!} /></p>
               </details>
             ))}
           </div>
@@ -182,47 +185,42 @@ const faq = [
 
     <footer class="foot ink">
       <div class="in-wrap">
-        <p class="poster closing" data-words>
-          {words('Intră în colecție').map((x) => (<><span class="w" style={`--d:${x.d}ms`}>{x.w}</span>{' '}</>))}
-        </p>
-        <a href="/magazin/" class="btn" data-rev>ENTER THE EXPERIENCE</a>
+        <p class="poster closing" data-words><Words en="Enter the collection" ro="Intră în colecție" /></p>
+        <a href="/magazin/" class="btn" data-enter data-rev>ENTER THE EXPERIENCE</a>
         <div class="foot-lines mono">
           <span data-rev style={rev(1)}>© {BRAND}</span>
           <a data-rev style={rev(2)} href={`https://wa.me/${WHATSAPP}`}>WhatsApp {WHATSAPP_DISPLAY}</a>
-          <a data-rev style={rev(3)} href="/garantie/">Garanție și livrare</a>
+          <a data-rev style={rev(3)} href="/garantie/"><L en="Warranty and delivery" ro="Garanție și livrare" /></a>
+          <button type="button" class="langbtn inline mono" data-lang-toggle aria-label="Switch language" data-a="aria-label" data-a-en="Switch language to Romanian" data-a-ro="Schimbă limba în engleză"><span class="lg en">EN</span><span class="sep">/</span><span class="lg ro">RO</span></button>
         </div>
       </div>
     </footer>
+
+    <!-- ENTER transition: shutters + orange band + scan lines + wordmark. transform/opacity only. -->
+    <div class="warp" aria-hidden="true">
+      {strips.map((i) => <i class="strip" style={`--i:${i}`}></i>)}
+      <i class="wband"></i>
+      <span class="wmark poster">{BRAND}</span>
+    </div>
     <div class="grain" aria-hidden="true"></div>
 
     <script>
       import { initPoster } from '../scripts/poster';
+      import { initLang } from '../scripts/lang';
+      initLang();
       initPoster();
     </script>
   </body>
 </html>
 
 <style is:global>
-  @font-face { font-family: 'Archivo'; font-style: normal; font-weight: 100 900; font-stretch: 62% 125%; font-display: swap;
-    src: url(/fonts/archivo-ext.woff2) format('woff2');
-    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
-  @font-face { font-family: 'Archivo'; font-style: normal; font-weight: 100 900; font-stretch: 62% 125%; font-display: swap;
-    src: url(/fonts/archivo-latin.woff2) format('woff2');
-    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-  @font-face { font-family: 'Space Mono'; font-style: normal; font-weight: 400; font-display: swap;
-    src: url(/fonts/mono-ext.woff2) format('woff2');
-    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
-  @font-face { font-family: 'Space Mono'; font-style: normal; font-weight: 400; font-display: swap;
-    src: url(/fonts/mono-latin.woff2) format('woff2');
-    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-
   :root { --ink: #0B0E14; --deep: #07090D; --glacier: #F2F4F1; --white: #FAFBFA; --or: #FF4D00; --tod: #E9EDF2; --tol: #12161D;
     --e: cubic-bezier(0.16, 1, 0.3, 1); --g: clamp(1.25rem, 4vw, 4rem); }
   * { box-sizing: border-box; }
   html { background: var(--ink); -webkit-text-size-adjust: 100%; }
   body { margin: 0; overflow-x: clip; background: var(--ink); color: var(--tod); font: 400 16px/1.5 'Archivo', system-ui, sans-serif; }
   a { color: inherit; }
-  @view-transition { navigation: auto; }
+  html[lang='en'] [data-l='ro'], html[lang='ro'] [data-l='en'] { display: none !important; }
 
   .ink { background: var(--ink); color: var(--tod); --hl: rgba(233, 237, 242, 0.18); }
   .glc { background: var(--glacier); color: var(--tol); --hl: rgba(18, 22, 29, 0.2); }
@@ -241,7 +239,7 @@ const faq = [
 
   /* Pinned stages */
   .stage { position: relative; --p: 0; }
-  .pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
+  .pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; contain: paint; }
   .hero { height: 300vh; height: 300svh; }
   .ladder { height: 400vh; height: 400svh; }
   .whiteout { height: 240vh; height: 240svh; }
@@ -255,12 +253,12 @@ const faq = [
   #scan { position: absolute; inset: 0; width: 100%; height: 100%; display: block; background: linear-gradient(180deg, #0B0E14, #07090D); }
   .mark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--white);
     font-size: min(clamp(4rem, 33vw, 40rem), calc(94vw / (var(--chars) * 0.56)));
-    opacity: clamp(0, calc(1 - var(--p) * 1.9), 1); transform: scale(calc(1 - var(--p) * 0.34)); will-change: transform, opacity; pointer-events: none; }
+    will-change: transform, opacity; pointer-events: none; }
   .claim { position: absolute; inset: 0 var(--g); display: flex; flex-wrap: wrap; align-content: center; justify-content: center; text-align: center; color: var(--tod);
-    font-size: clamp(2.2rem, 9vw, 7rem); opacity: clamp(0, calc((var(--p) - 0.52) * 4), 1); pointer-events: none; }
+    font-size: clamp(2.2rem, 9vw, 7rem); opacity: 0; will-change: opacity; pointer-events: none; }
   .cta { position: absolute; left: 0; right: 0; bottom: calc(4.9rem + env(safe-area-inset-bottom)); display: flex; justify-content: center; z-index: 4; }
   .meta { position: absolute; left: var(--g); right: var(--g); bottom: calc(1.25rem + env(safe-area-inset-bottom)); margin: 0; padding: 0; list-style: none;
-    display: flex; justify-content: space-between; gap: 0.75rem; opacity: clamp(0, calc(1 - var(--p) * 3.2), 1); }
+    display: flex; justify-content: space-between; gap: 0.75rem; will-change: opacity; }
   .meta li:nth-child(2) { text-align: center; }
   .meta li:last-child { text-align: right; }
   .btn { display: inline-flex; align-items: center; min-height: 52px; padding: 0 1.75rem; background: var(--or); color: var(--ink); text-decoration: none;
@@ -276,15 +274,15 @@ const faq = [
   .row.on { opacity: 1; padding-left: 14px; }
   .row .sub { font-size: clamp(1.4rem, 4.4vw, 2.1rem); }
   .row p { margin: 0.35rem 0 0; font-size: 13.5px; line-height: 1.45; max-width: 34rem; }
-  .meter { position: absolute; left: 0; bottom: 0; height: 2px; background: var(--or); width: calc(var(--p) * 100%); }
+  .meter { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--or); transform: scaleX(0); transform-origin: 0 50%; will-change: transform; }
   @media (min-width: 860px) { .ladder-grid { grid-template-columns: 1.1fr 1fr; align-items: center; gap: 3rem; } }
 
   /* Whiteout */
-  .mask { font-size: clamp(2.4rem, 9vw, 7.5rem); padding: 0 var(--g);
+  .mask { --p: 0; font-size: clamp(2.4rem, 9vw, 7.5rem); padding: 0 var(--g);
     -webkit-mask-image: linear-gradient(180deg, #000 calc((1 - var(--p)) * 100%), transparent calc((1 - var(--p)) * 100% + 14%));
     mask-image: linear-gradient(180deg, #000 calc((1 - var(--p)) * 100%), transparent calc((1 - var(--p)) * 100% + 14%)); }
   .mask .line { display: block; }
-  .cap { margin: 1.5rem 0 0; opacity: clamp(0, calc(1 - var(--p) * 2.4), 1); }
+  .cap { margin: 1.5rem 0 0; will-change: opacity; }
 
   /* Bands */
   .band { position: relative; padding: clamp(5.5rem, 12vw, 9rem) 0 clamp(4rem, 9vw, 7rem); }
@@ -334,12 +332,40 @@ const faq = [
   .foot-lines a:hover { color: var(--white); }
 
   /* Grain */
-  .grain { position: fixed; inset: 0; z-index: 50; pointer-events: none; opacity: 0.05; mix-blend-mode: overlay;
+  .grain { position: fixed; inset: 0; z-index: 50; pointer-events: none; opacity: 0.045;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
 
+  /* Language toggle */
+  .langbtn { position: absolute; top: 1.1rem; right: var(--g); z-index: 5; display: inline-flex; gap: 0.35rem; min-height: 44px; align-items: center; padding: 0 0.25rem; background: none; border: 0; color: var(--tod); cursor: pointer; }
+  .langbtn.inline { position: static; min-height: 0; margin-left: auto; padding: 0; color: inherit; }
+  .langbtn .lg { opacity: 0.45; }
+  .langbtn .sep { opacity: 0.3; }
+  html[lang='en'] .langbtn .lg.en, html[lang='ro'] .langbtn .lg.ro { opacity: 1; color: var(--or); }
+  .langbtn:focus-visible { outline: 1px solid var(--or); outline-offset: 2px; }
+
+  /* ENTER transition */
+  .warp { position: fixed; inset: 0; z-index: 60; pointer-events: none; visibility: hidden; overflow: hidden; }
+  .leaving .warp { visibility: visible; }
+  .leaving body { overflow: hidden; }
+  .strip { position: absolute; left: 0; right: 0; top: calc(var(--i) * 12.5%); height: calc(12.5% + 1px); background: var(--ink); border-bottom: 1px solid rgba(255, 77, 0, 0.55);
+    transform: scaleX(0); transform-origin: 0 50%; will-change: transform; }
+  .strip:nth-child(even) { transform-origin: 100% 50%; }
+  .leaving .strip { transform: scaleX(1); transition: transform 0.62s var(--e) calc(var(--i) * 45ms); }
+  .wband { position: absolute; top: 0; bottom: 0; left: 0; width: 55%; background: linear-gradient(90deg, rgba(255, 77, 0, 0), rgba(255, 77, 0, 0.9) 55%, rgba(255, 77, 0, 0));
+    transform: translate3d(-110%, 0, 0); will-change: transform; }
+  .leaving .wband { transform: translate3d(200%, 0, 0); transition: transform 0.95s cubic-bezier(0.65, 0, 0.35, 1) 0.08s; }
+  .wmark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--white); font-size: min(clamp(4rem, 33vw, 40rem), calc(94vw / 2.24));
+    opacity: 0; transform: scale(0.82); will-change: transform, opacity; }
+  .leaving .wmark { opacity: 1; transform: scale(1); transition: opacity 0.45s ease 0.3s, transform 0.9s var(--e) 0.3s; }
+  .warp::before { content: ''; position: absolute; inset: 0; z-index: 2; opacity: 0; background: repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0 1px, transparent 1px 5px); }
+  .leaving .warp::before { opacity: 1; transition: opacity 0.4s ease 0.2s; }
+  .wmark, .wband { z-index: 1; }
+  .leaving main, .leaving .foot { opacity: 0; transition: opacity 0.5s ease; }
+
   @media (prefers-reduced-motion: reduce) {
-    .mask { -webkit-mask-image: none; mask-image: none; }
+    .mask { -webkit-mask-image: none !important; mask-image: none !important; }
     .js [data-rev], .js .w { opacity: 1; transform: none; transition: none; }
     .row, .plus::before, .plus::after { transition: none; }
+    .warp { display: none; }
   }
 </style>

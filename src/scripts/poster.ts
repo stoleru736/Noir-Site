@@ -10,41 +10,81 @@ function hash(n: number): number {
 }
 
 // ---- Scroll stages -------------------------------------------------------------------------------------------------
+// Stage geometry is measured once (and on resize); each scroll frame is then pure arithmetic on scrollY followed by a few
+// direct opacity/transform writes. No layout reads and no custom-property cascade during scroll.
+interface Stage { el: HTMLElement; name: string; top: number; span: number; last: number }
+
 function initStages(): void {
-  const stages = Array.from(document.querySelectorAll<HTMLElement>('[data-stage]'));
-  const ladder = document.querySelector<HTMLElement>('[data-ladder]');
-  const rows = ladder ? Array.from(ladder.querySelectorAll<HTMLElement>('[data-row]')) : [];
+  const stages: Stage[] = Array.from(document.querySelectorAll<HTMLElement>('[data-stage]')).map((el) => ({
+    el, name: el.dataset['stage'] ?? '', top: 0, span: 1, last: -1,
+  }));
+  const q = <T extends HTMLElement>(sel: string): T | null => document.querySelector<T>(sel);
+  const mark = q('[data-mark]');
+  const claim = q('[data-claim]');
+  const meta = q('[data-meta]');
+  const meter = q('[data-meter]');
+  const mask = q('[data-mask]');
+  const cap = q('[data-cap]');
+  const rows = Array.from(document.querySelectorAll<HTMLElement>('[data-row]'));
   const numEls = Array.from(document.querySelectorAll<HTMLElement>('[data-num]'));
   const tagEls = Array.from(document.querySelectorAll<HTMLElement>('[data-step]'));
   let current = -1;
   let queued = false;
 
-  const setIndex = (i: number): void => {
-    if (i === current) return;
+  const stepLabel = (i: number): string => `${document.documentElement.lang === 'ro' ? 'PAS' : 'STEP'} ${i + 1}/${rows.length}`;
+  const setIndex = (i: number, force = false): void => {
+    if (i === current && !force) return;
     current = i;
     rows.forEach((row, k) => row.classList.toggle('on', k <= i));
-    const row = rows[i];
-    const num = row?.dataset['n'] ?? '001';
+    const num = rows[i]?.dataset['n'] ?? '001';
     numEls.forEach((el) => {
       const lead = el.querySelector('[data-lead]');
       const tail = el.querySelector('[data-tail]');
       if (lead) lead.textContent = num.slice(0, 1);
       if (tail) tail.textContent = num.slice(1);
     });
-    tagEls.forEach((el) => (el.textContent = `PAS ${i + 1}/${rows.length}`));
+    tagEls.forEach((el) => (el.textContent = stepLabel(i)));
+  };
+  document.addEventListener('noir:lang', () => setIndex(Math.max(current, 0), true));
+
+  const measure = (): void => {
+    const vh = innerHeight;
+    for (const s of stages) {
+      const pin = s.el.firstElementChild as HTMLElement | null;
+      s.top = s.el.getBoundingClientRect().top + scrollY;
+      s.span = Math.max(1, s.el.offsetHeight - (pin ? pin.clientHeight : vh));
+      s.last = -1;
+    }
+  };
+
+  const apply = (s: Stage, p: number): void => {
+    switch (s.name) {
+      case 'hero':
+        if (mark) { mark.style.opacity = String(clamp01(1 - p * 1.9)); mark.style.transform = `scale(${(1 - p * 0.34).toFixed(4)})`; }
+        if (claim) claim.style.opacity = String(clamp01((p - 0.52) * 4));
+        if (meta) meta.style.opacity = String(clamp01(1 - p * 3.2));
+        break;
+      case 'ladder':
+        setIndex(Math.min(rows.length - 1, Math.floor(p * rows.length)));
+        if (meter) meter.style.transform = `scaleX(${p.toFixed(4)})`;
+        break;
+      case 'whiteout':
+        if (mask) mask.style.setProperty('--p', p.toFixed(4));
+        if (cap) cap.style.opacity = String(clamp01(1 - p * 2.4));
+        break;
+    }
   };
 
   const update = (): void => {
     queued = false;
+    const y = scrollY;
     const vh = innerHeight;
     for (const s of stages) {
-      const r = s.getBoundingClientRect();
-      if (r.bottom < -vh || r.top > vh * 2) continue;
-      const pin = s.firstElementChild as HTMLElement | null;
-      const span = r.height - (pin ? pin.clientHeight : vh);
-      const p = span > 0 ? clamp01(-r.top / span) : 0;
-      s.style.setProperty('--p', p.toFixed(4));
-      if (s === ladder) setIndex(Math.min(rows.length - 1, Math.floor(p * rows.length)));
+      if (y + vh < s.top || y > s.top + s.span + vh) continue;
+      const p = Math.round(clamp01((y - s.top) / s.span) * 2000) / 2000;
+      if (p === s.last) continue;
+      s.last = p;
+      apply(s, p);
     }
   };
   const request = (): void => {
@@ -52,10 +92,33 @@ function initStages(): void {
     queued = true;
     requestAnimationFrame(update);
   };
+  const remeasure = (): void => { measure(); request(); };
   addEventListener('scroll', request, { passive: true });
-  addEventListener('resize', request, { passive: true });
+  addEventListener('resize', remeasure, { passive: true });
+  addEventListener('load', remeasure);
+  if (document.fonts) void document.fonts.ready.then(remeasure);
   setIndex(0);
+  measure();
   update();
+}
+
+// ---- ENTER transition ----------------------------------------------------------------------------------------------
+function initEnter(): void {
+  const root = document.documentElement;
+  const go = (href: string): void => location.assign(href);
+  document.querySelectorAll<HTMLAnchorElement>('a[data-enter]').forEach((a) =>
+    a.addEventListener('click', (e) => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+      e.preventDefault();
+      if (reduced) return go(a.href);
+      if (root.classList.contains('leaving')) return;
+      try { sessionStorage.setItem('noir-enter', '1'); } catch { /* storage may be blocked */ }
+      root.classList.add('leaving');
+      setTimeout(() => go(a.href), 1000);
+    }),
+  );
+  // Back/forward cache: the page comes back frozen mid-transition.
+  addEventListener('pageshow', (e) => { if (e.persisted) root.classList.remove('leaving'); });
 }
 
 // ---- Reveals -------------------------------------------------------------------------------------------------------
@@ -116,9 +179,10 @@ function initScan(canvas: HTMLCanvasElement): void {
     }
     ctx.globalAlpha = 1;
   };
+  let last = 0;
   const loop = (t: number): void => {
     if (!running) return;
-    draw(t);
+    if (t - last >= 32) { last = t; draw(t); }
     requestAnimationFrame(loop);
   };
   size();
@@ -189,8 +253,12 @@ function initPlates(canvases: HTMLCanvasElement[]): void {
     }
   });
   plates.forEach((p) => io.observe(p.canvas));
+  let last = 0;
   const loop = (t: number): void => {
-    for (const p of plates) if (p.visible) paint(p, t);
+    if (t - last >= 32) {
+      last = t;
+      for (const p of plates) if (p.visible) paint(p, t);
+    }
     requestAnimationFrame(loop);
   };
   requestAnimationFrame(loop);
@@ -199,6 +267,7 @@ function initPlates(canvases: HTMLCanvasElement[]): void {
 export function initPoster(): void {
   initReveal();
   initStages();
+  initEnter();
   const scan = document.querySelector<HTMLCanvasElement>('#scan');
   if (scan) initScan(scan);
   initPlates(Array.from(document.querySelectorAll<HTMLCanvasElement>('canvas[data-plate]')));

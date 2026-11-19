@@ -42,3 +42,11 @@ export const categoryLabels: Record<string, string> = {
 export function whatsappLink(text: string): string {
   return `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`;
 }
+
+// English labels (Romanian ones above are the originals).
+export const genderLabelsEn: Record<Gender, string> = { barbati: 'Men', dama: 'Women', unisex: 'Unisex' };
+export const stockLabelsEn: Record<Stock, string> = { stock: 'In stock 24h', preorder: 'Pre-order' };
+export const colorLabelsEn: Record<string, string> = { negru: 'Black', gri: 'Grey', alb: 'White', maro: 'Brown', roz: 'Pink' };
+export const colorEn = (p: Product): string => colorLabelsEn[p.color] ?? p.colorLabel;
+export const descriptionEn = (p: Product): string =>
+  `${p.category.charAt(0).toUpperCase() + p.category.slice(1)} sneakers from the ${BRAND} collection, in ${colorEn(p).toLowerCase()}. Clean silhouette, sober finishes, everyday wear.`;
