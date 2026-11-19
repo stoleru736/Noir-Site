@@ -45,7 +45,7 @@ select{background:var(--bg);color:var(--fg);border:1px solid var(--line);padding
 .note{color:var(--mut);font-size:.9rem}
 .skip{position:absolute;left:-999px}.skip:focus{left:1rem;top:1rem;background:var(--bg);padding:.5rem;z-index:9}
 
-/* --- Mobile-first store (OBSIDIAN DUNES) --- */
+/* --- Mobile-first store (NOIR) --- */
 body{overflow-x:clip}
 header.site{position:sticky;top:0;z-index:20;background:rgba(11,11,11,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 header.site .bar{height:56px}

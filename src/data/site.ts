@@ -1,6 +1,6 @@
 import products from './products.json';
 
-export const BRAND = 'OBSIDIAN DUNES';
+export const BRAND = 'NOIR';
 export const TAGLINE = 'WHERE MOVEMENT MEETS IDENTITY.';
 export const WHATSAPP = '40750437127';
 export const WHATSAPP_DISPLAY = '+40 750 437 127';
